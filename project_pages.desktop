@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=project_pages
+X-Python-2-Compatible=false
+X-Krita-Manual=project_pages_manual.html
+Name=Project Pages
+Comment=Compile KRA files into a project file
