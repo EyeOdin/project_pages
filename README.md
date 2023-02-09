@@ -10,8 +10,8 @@ Project Pages is a Krita plugin to Compile files into a single project file.
 * Pages ( New, Import, Rename, Export)
 * Context ( Thumbnail, Delete )
 * Non Linear order of Image and Note files
-* Templates project sensitive
-* Layers rename in batch
+* Project Templates
+* Rename Layers
 * Guides ( List, Mirror )
 * Mirror Fix
 * Read ![wiki](https://github.com/EyeOdin/project_pages/wiki) for more information
@@ -19,6 +19,11 @@ Project Pages is a Krita plugin to Compile files into a single project file.
 
 ## Preview
 ![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_001.png?raw=true)
+
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_002.png?raw=true)
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_003.png?raw=true)
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_004.png?raw=true)
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_005.png?raw=true)
 
 
 ## Support
