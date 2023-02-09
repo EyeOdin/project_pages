@@ -20,13 +20,7 @@ Project Pages is a Krita plugin to Compile files into a single project file.
 ## Preview
 ![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_001.png?raw=true)
 
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_002.png?raw=true)
-
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_003.png?raw=true)
-
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_004.png?raw=true)
-
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_005.png?raw=true)
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_002.png?raw=true) ![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_003.png?raw=true) ![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_004.png?raw=true) ![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_005.png?raw=true)
 
 
 ## Support
