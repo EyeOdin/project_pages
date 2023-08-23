@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ActionCollection version="2" name="Scripts">
+    <Actions category="Scripts">
+        <text>Project Pages</text>
+
+
+        <Action name="project_pages_mirror_fix_left">
+          <text>Mirror Fix LEFT</text>
+          <shortcut>none</shortcut>
+          <isCheckable>false</isCheckable>
+        </Action>
+        <Action name="project_pages_mirror_fix_right">
+          <text>Mirror Fix RIGHT</text>
+          <shortcut>none</shortcut>
+          <isCheckable>false</isCheckable>
+        </Action>
+        <Action name="project_pages_mirror_fix_top">
+          <text>Mirror Fix TOP</text>
+          <shortcut>none</shortcut>
+          <isCheckable>false</isCheckable>
+        </Action>
+        <Action name="project_pages_mirror_fix_down">
+          <text>Mirror Fix DOWN</text>
+          <shortcut>none</shortcut>
+          <isCheckable>false</isCheckable>
+        </Action>
+
+
+    </Actions>
+</ActionCollection>
