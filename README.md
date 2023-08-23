@@ -11,6 +11,7 @@ Project Pages is a Krita plugin to Compile files into a single project file.
 * Context Menus
 * Image connected to a Note
 * Page Template
+* Document Information ( XML )
 * Rename Layers
 * Guides ( List, Mirror )
 * Mirror Fix
