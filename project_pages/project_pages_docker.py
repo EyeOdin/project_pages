@@ -2725,8 +2725,8 @@ class ProjectPages_Docker( DockWidget ):
         # Splitter Geometry
         self.layout.splitter.moveSplitter( int( self.layout.main.width() * 0.5 ), 1 )
     def resizeEvent( self, event ):
-        self.Resize_Print( event )
-        # pass
+        # self.Resize_Print( event )
+        pass
     def enterEvent( self, event ):
         pass
     def leaveEvent( self, event ):
