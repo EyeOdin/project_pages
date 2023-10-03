@@ -1,4 +1,4 @@
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/LOGO/project_pages_logo_L.png?raw=true)
+![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/LOGO/project_pages_logo_S.png?raw=true)
 
 ## Purpose
 
