@@ -219,13 +219,12 @@ class ProjectPages_Docker( DockWidget ):
         self.directory_plugin = str( os.path.dirname( os.path.realpath( __file__ ) ) )
 
         # Widget Docker
-        self.layout = uic.loadUi( os.path.normpath( self.directory_plugin + "/project_pages_docker.ui" ), QWidget() )
+        self.layout = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_docker.ui" ), QWidget( self ) )
         self.setWidget( self.layout )
 
         # Settings
-        self.dialog = uic.loadUi( os.path.normpath( self.directory_plugin + "/project_pages_settings.ui" ), QDialog() )
+        self.dialog = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_settings.ui" ), QDialog( self ) )
         self.dialog.setWindowTitle( "Project Pages : Settings" )
-        self.dialog.setWindowFlag( Qt.WindowStaysOnTopHint )
 
         # Populate Combobox
         for i in range( 0, len( self.doc_template ) ):
@@ -955,7 +954,6 @@ class ProjectPages_Docker( DockWidget ):
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.DirectoryOnly )
         path = file_dialog.getExistingDirectory( self, "Select Project Directory" )
-        path = os.path.normpath( path )
         if ( path != "" and path != "." ):
             name, boolean = QtWidgets.QInputDialog.getText( self, 'Project Pages', 'Select Project Name' )
             if boolean == True:
@@ -964,7 +962,7 @@ class ProjectPages_Docker( DockWidget ):
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.AnyFile )
         project_zip = file_dialog.getOpenFileName( self, "Select Project {} File".format( file_extension.upper() ), "", str( "*."+file_extension ) )
-        project_zip = os.path.normpath( project_zip[0] )
+        project_zip = project_zip[0]
         if ( project_zip != "" and project_zip != "." and self.project_zip != project_zip ):
             self.ZIP_Open( project_zip )
     def Project_Open( self ):
@@ -984,7 +982,6 @@ class ProjectPages_Docker( DockWidget ):
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.DirectoryOnly )
         path = file_dialog.getExistingDirectory( self, "Select Search Directory" )
-        path = os.path.normpath( path )
         if ( path != "" and path != "." ):
             self.Files_Search( path, "PROJECT" )
 
@@ -1073,8 +1070,8 @@ class ProjectPages_Docker( DockWidget ):
     def ZIP_New( self, path, name ):
         if self.project_active == False:
             # Paths
-            project_directory = os.path.normpath( os.path.join( path , name ) )
-            project_zip = os.path.normpath( project_directory + "." + file_extension )
+            project_directory = os.path.join( path , name )
+            project_zip = project_directory + "." + file_extension
 
             exists = ( os.path.exists( project_directory ) ) and ( os.path.exists( project_zip ) )
             if exists == False:
@@ -1083,19 +1080,19 @@ class ProjectPages_Docker( DockWidget ):
 
                 # Paths
                 self.project_zip = project_zip
-                self.project_directory = os.path.normpath( project_directory )
-                self.project_control = os.path.normpath( os.path.join( project_directory, "control.eo" ) )
-                self.project_thumbnail = os.path.normpath( os.path.join( project_directory, "thumbnail.png" ) )
-                self.project_images = os.path.normpath( os.path.join( project_directory, "IMAGES" ) )
-                self.project_texts = os.path.normpath( os.path.join( project_directory, "TEXTS" ) )
-                self.project_trash = os.path.normpath( os.path.join( project_directory, "TRASH" ) )
+                self.project_directory = project_directory
+                self.project_control = os.path.join( project_directory, "control.eo" )
+                self.project_thumbnail = os.path.join( project_directory, "thumbnail.png" )
+                self.project_images = os.path.join( project_directory, "IMAGES" )
+                self.project_texts = os.path.join( project_directory, "TEXTS" )
+                self.project_trash = os.path.join( project_directory, "TRASH" )
 
                 # Create Project Folders
-                mode = 0o666
-                os.mkdir( self.project_directory, mode )
-                os.mkdir( self.project_images, mode )
-                os.mkdir( self.project_texts, mode )
-                os.mkdir( self.project_trash, mode )
+                os.mkdir( self.project_directory )
+                os.mkdir( self.project_images )
+                os.mkdir( self.project_texts )
+                os.mkdir( self.project_trash )
+
                 # Create Project TXT
                 file = open( self.project_control, "w" )
                 file.write( "project_pages" )
@@ -1130,8 +1127,7 @@ class ProjectPages_Docker( DockWidget ):
             name = basename.split( "." )[0] + "." + basename.split( "." )[1]
             parent = os.path.dirname( project_zip )
             # Paths
-            project_directory = os.path.normpath( os.path.join( parent, name ) )
-            project_zip = os.path.normpath( project_zip )
+            project_directory = os.path.join( parent, name )
 
             # Filename is Open
             exists = os.path.exists( project_directory )
@@ -1163,11 +1159,11 @@ class ProjectPages_Docker( DockWidget ):
                     self.project_active = True
                     self.project_zip = project_zip
                     self.project_directory = project_directory
-                    self.project_control = os.path.normpath( os.path.join( project_directory, "control.eo" ) )
-                    self.project_thumbnail = os.path.normpath( os.path.join( project_directory, "thumbnail.png" ) )
-                    self.project_images = os.path.normpath( os.path.join( project_directory, "IMAGES" ) )
-                    self.project_texts = os.path.normpath( os.path.join( project_directory, "TEXTS" ) )
-                    self.project_trash = os.path.normpath( os.path.join( project_directory, "TRASH" ) )
+                    self.project_control = os.path.join( project_directory, "control.eo" )
+                    self.project_thumbnail = os.path.join( project_directory, "thumbnail.png" )
+                    self.project_images = os.path.join( project_directory, "IMAGES" )
+                    self.project_texts = os.path.join( project_directory, "TEXTS" )
+                    self.project_trash = os.path.join( project_directory, "TRASH" )
 
                     # Display
                     self.layout.active_project.setText( basename.replace( ".project_pages.zip", "" ) )
@@ -1254,8 +1250,8 @@ class ProjectPages_Docker( DockWidget ):
                 check_name = name + ".kra"
                 if check_name not in taken_names:
                     # Paths
-                    file_img = os.path.normpath( self.project_images + "\\" + name + ".kra" )
-                    file_txt = os.path.normpath( self.project_texts + "\\" + name + ".eo" )
+                    file_img = os.path.join( self.project_images, f"{ name }.kra" )
+                    file_txt = os.path.join( self.project_texts, f"{ name }.eo" )
 
                     # Texts
                     note = open( file_txt, "w" )
@@ -1311,7 +1307,7 @@ class ProjectPages_Docker( DockWidget ):
         shutil.copy( source, destination )
         # Create Text
         name = self.Path_Components( source )
-        file_txt = os.path.normpath( self.project_texts + "\\" + name + ".eo" )
+        file_txt = os.path.join( self.project_texts, f"{ name }.eo" )
         note = open( file_txt, "w" )
         note.write( "" )
         note.close()
@@ -1320,14 +1316,13 @@ class ProjectPages_Docker( DockWidget ):
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.DirectoryOnly )
         path = file_dialog.getExistingDirectory( self, "Select Search Directory" )
-        path = os.path.normpath( path )
         if ( path != "" and path != "." ):
             self.Files_Search( path, "PAGE" )
     def Page_Open( self ):
         if self.project_active == True:
             # Item
             basename = self.layout.page_list.currentItem().text()
-            path = os.path.normpath( os.path.join( self.project_images, basename ) )
+            path = os.path.join( self.project_images, basename )
 
             # Create Document
             document = Krita.instance().openDocument( path )
@@ -1364,13 +1359,13 @@ class ProjectPages_Docker( DockWidget ):
                         image_ext = splited[1]
                         num = str( i+1 ).zfill( 4 )
                         # Path OLD
-                        old_image  = os.path.normpath( self.project_images + "\\" + item_i )
-                        old_backup = os.path.normpath( self.project_images + "\\" + item_i + "~" )
-                        old_text   = os.path.normpath( self.project_texts  + "\\" + basename_i + ".eo" )
+                        old_image  = os.path.join( self.project_images, item_i )
+                        old_backup = os.path.join( self.project_images, f"{ item_i }~" )
+                        old_text   = os.path.join( self.project_texts,  f"{ basename_i }.eo" )
                         # Path NEW
-                        new_image  = os.path.normpath( self.project_images + "\\" + new_name + "_" + num + "." + image_ext )
-                        new_backup = os.path.normpath( self.project_images + "\\" + new_name + "_" + num + "." + image_ext + "~" )
-                        new_text   = os.path.normpath( self.project_texts  + "\\" + new_name + "_" + num + ".eo" )
+                        new_image  = os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }" )
+                        new_backup = os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }~" )
+                        new_text   = os.path.join( self.project_texts,  f"{ new_name }_{ num }.eo" )
 
                         # Image File
                         try:
@@ -1404,7 +1399,6 @@ class ProjectPages_Docker( DockWidget ):
             file_dialog = QFileDialog( QWidget( self ) )
             file_dialog.setFileMode( QFileDialog.DirectoryOnly )
             export_path = file_dialog.getExistingDirectory( self, "Select Export Directory" )
-            export_path = os.path.normpath( export_path )
             if ( export_path != "" and export_path != "." ):
 
                 # Check if documents are closed
@@ -1430,7 +1424,7 @@ class ProjectPages_Docker( DockWidget ):
                         self.layout.text_note.setText( "Exporting : " + str( name_i ) )
 
                         # Path
-                        image_path = os.path.normpath( os.path.join( self.project_images, name_i ) )
+                        image_path = os.path.join( self.project_images, name_i )
                         
                         # Document
                         document = Krita.instance().openDocument( image_path )
@@ -1443,14 +1437,14 @@ class ProjectPages_Docker( DockWidget ):
                                 document.setCurrentTime( anim )
                                 document.waitForDone()
                                 if boolean == False:
-                                    save_path = os.path.normpath( export_path + "\\" + basename_i + ".png" )
+                                    save_path = os.path.join( export_path, f"{ basename_i }.png" )
                                 else:
-                                    save_path = os.path.normpath( export_path + "\\" + basename_i + "_f" + str( anim ).zfill( 4 ) + ".png" )
+                                    save_path = os.path.join( export_path, f"{ basename_i }_f{ str( anim ).zfill( 4 ) }.png" )
                                 qimage = document.thumbnail( width, height )
                                 qimage.save( save_path )
                                 document.waitForDone()
                         else:
-                            save_path = os.path.normpath( export_path + "\\" + basename_i + ".png" )
+                            save_path = os.path.join( export_path, f"{ basename_i }.png" )
                             qimage = document.thumbnail( width, height )
                             qimage.save( save_path )
                             document.waitForDone()
@@ -1469,7 +1463,8 @@ class ProjectPages_Docker( DockWidget ):
     def Page_Thumbnail( self, name ):
         if ( self.project_active == True and name != None ):
             # File
-            image_path = os.path.normpath( self.project_directory + "\\IMAGES\\" + name )
+            temp_ip = os.path.join( self.project_directory, "IMAGES" )
+            image_path = os.path.join( temp_ip, name )
             qreader = QImageReader( image_path )
             if qreader.canRead() == True:
                 qimage = qreader.read()
@@ -1520,9 +1515,9 @@ class ProjectPages_Docker( DockWidget ):
                 item_i = lista[i]
                 basename_i = ( item_i.split( "." ) )[0]
                 # Variables
-                path_image  = os.path.normpath( self.project_images + "\\" + item_i )
-                path_backup = os.path.normpath( self.project_images + "\\" + item_i + "~" )
-                path_text   = os.path.normpath( self.project_texts  + "\\" + basename_i + ".eo" )
+                path_image  = os.path.join( self.project_images, item_i )
+                path_backup = os.path.join( self.project_images, f"{ item_i }~" )
+                path_text   = os.path.join( self.project_texts,  f"{ basename_i }.eo" )
 
                 # Image File
                 try:
@@ -1574,7 +1569,7 @@ class ProjectPages_Docker( DockWidget ):
             # Found Images
             self.found_images = []
             for i in range( 0, len( images ) ):
-                image_i = os.path.normpath( images[i].filePath() )
+                image_i = images[i].filePath()
                 if image_i.endswith( "-autosave.kra" ) == False: # Ignore autosaves
                     self.found_images.append( image_i )
 
@@ -1587,7 +1582,7 @@ class ProjectPages_Docker( DockWidget ):
             # Found Texts
             self.found_texts = []
             for i in range( 0, len( texts ) ):
-                text_i = os.path.normpath( texts[i].filePath() )
+                text_i = texts[i].filePath()
                 self.found_texts.append( text_i )
 
             # Directory Texts
@@ -1600,12 +1595,12 @@ class ProjectPages_Docker( DockWidget ):
             self.found_trash = []
             for i in range( 0, len( trash ) ):
                 # Rename Trash ( avoid name conflicts )
-                trash_i = os.path.normpath( trash[i].filePath() )
+                trash_i = trash[i].filePath()
                 boolean = os.path.basename( trash_i ).startswith( "[ Trash_" )
                 if boolean == False:
                     basename = str( os.path.basename( trash_i ) )
                     trash_tag = "[ Trash_{number} ] ".format( number=str( i ).zfill( 4 ) )
-                    new_name = os.path.normpath( self.project_trash + "\\" + trash_tag + basename )
+                    new_name = os.path.join( self.project_trash, trash_tag + basename )
                     qfile.rename( trash_i, new_name )
                 else:
                     new_name = trash_i
@@ -1664,7 +1659,7 @@ class ProjectPages_Docker( DockWidget ):
         kernel = str( QSysInfo.kernelType() ) # WINDOWS=winnt & LINUX=linux
         if kernel == "winnt": # Windows
             FILEBROWSER_PATH = os.path.join( os.getenv( 'WINDIR' ), 'explorer.exe' )
-            subprocess.run( [FILEBROWSER_PATH, operation, os.path.normpath( project_directory )] )
+            subprocess.run( [ FILEBROWSER_PATH, operation, project_directory ] )
         elif kernel == "linux": # Linux
             QDesktopServices.openUrl( QUrl.fromLocalFile( os.path.dirname( project_directory ) ) )
         elif kernel == "darwin": # MAC
@@ -1692,7 +1687,7 @@ class ProjectPages_Docker( DockWidget ):
         while files.hasNext():
             # Progress Bar
             self.layout.progress_bar.setValue( index )
-            item = os.path.normpath( files.next() )
+            item = files.next()
             if mode == "PROJECT":
                 if item not in self.recent_project:
                     self.Project_Recent_Add( item )
