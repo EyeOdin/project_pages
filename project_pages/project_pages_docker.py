@@ -107,16 +107,34 @@ class ProjectPages_Docker( DockWidget ):
         super( ProjectPages_Docker, self ).__init__()
 
         # Construct
-        self.Variables()
         self.User_Interface()
+        self.Variables()
         self.Connections()
         self.Modules()
         self.Style()
         self.Timer()
         self.Extension()
         self.Settings()
-        self.Loader()
 
+    def User_Interface( self ):
+        # Window
+        self.setWindowTitle( DOCKER_NAME )
+
+        # Operating System
+        self.OS = str( QSysInfo.kernelType() ) # WINDOWS=winnt & LINUX=linux
+        if self.OS == 'winnt': # Unlocks icons in Krita for Menu Mode
+            QApplication.setAttribute( Qt.AA_DontShowIconsInMenus, False )
+
+        # Path Name
+        self.directory_plugin = str( os.path.dirname( os.path.realpath( __file__ ) ) )
+
+        # Widget Docker
+        self.layout = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_docker.ui" ), QWidget( self ) )
+        self.setWidget( self.layout )
+
+        # Settings
+        self.dialog = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_settings.ui" ), QDialog( self ) )
+        self.dialog.setWindowTitle( "Project Pages : Settings" )
     def Variables( self ):
         # Variables
         self.project_active = False
@@ -206,30 +224,6 @@ class ProjectPages_Docker( DockWidget ):
         self.guide_snap = False
         self.guide_visible = False
         self.guide_lock = False
-    def User_Interface( self ):
-        # Window
-        self.setWindowTitle( DOCKER_NAME )
-
-        # Operating System
-        self.OS = str( QSysInfo.kernelType() ) # WINDOWS=winnt & LINUX=linux
-        if self.OS == 'winnt': # Unlocks icons in Krita for Menu Mode
-            QApplication.setAttribute( Qt.AA_DontShowIconsInMenus, False )
-
-        # Path Name
-        self.directory_plugin = str( os.path.dirname( os.path.realpath( __file__ ) ) )
-
-        # Widget Docker
-        self.layout = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_docker.ui" ), QWidget( self ) )
-        self.setWidget( self.layout )
-
-        # Settings
-        self.dialog = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_settings.ui" ), QDialog( self ) )
-        self.dialog.setWindowTitle( "Project Pages : Settings" )
-
-        # Populate Combobox
-        for i in range( 0, len( self.doc_template ) ):
-            self.dialog.doc_template.addItem( self.doc_template[i]["index"] )
-        self.dialog.doc_template.setCurrentText( "Paper A4" )
     def Connections( self ):
         # Panels
         self.layout.project_list.doubleClicked.connect( self.Project_Open )
@@ -345,6 +339,11 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.scroll_area_contents_layers.setStyleSheet( "#scroll_area_contents_layers{background-color: rgba( 0, 0, 0, 20 );}" )
         self.dialog.scroll_area_contents_guides.setStyleSheet( "#scroll_area_contents_guides{background-color: rgba( 0, 0, 0, 20 );}" )
         self.dialog.progress_bar.setStyleSheet( "#progress_bar{background-color: rgba( 0, 0, 0, 0 );}" )
+
+        # Populate Combobox
+        for i in range( 0, len( self.doc_template ) ):
+            self.dialog.doc_template.addItem( self.doc_template[i]["index"] )
+        self.dialog.doc_template.setCurrentText( "Paper A4" )
     def Timer( self ):
         if check_timer >= 30:
             self.timer_pulse = QtCore.QTimer( self )
@@ -356,6 +355,8 @@ class ProjectPages_Docker( DockWidget ):
         # Connect Extension Signals
         extension.SIGNAL_MIRROR_FIX.connect( self.MirrorFix_Run )
     def Settings( self ):
+        #region Variables
+
         # Directory Path
         recent_project = self.Set_Read( "EVAL", "recent_project", self.recent_project )
         for i in range( 0, len( recent_project ) ):
@@ -365,25 +366,43 @@ class ProjectPages_Docker( DockWidget ):
                 self.recent_project.append( path )
 
         # Rename Strings
-        self.Rename_LOAD( self.Set_Read( "EVAL", "rename_strings", self.rename_strings ) )
+        self.rename_strings = self.Set_Read( "EVAL", "rename_strings", self.rename_strings )
+
+        #endregion
+        #region Loader
+
+        try:
+            self.Loader()
+        except:
+            self.Variables()
+            self.Loader()
+
+        # endregion
+
     def Loader( self ):
-        # Update Display
+        # Directory Path
         self.Project_Thumbnail( self.recent_project )
 
+        # Rename Strings
+        self.Rename_LOAD( self.rename_strings )
     def Set_Read( self, mode, entry, default ):
         setting = Krita.instance().readSetting( "Project Pages", entry, "" )
         if setting == "":
             read = default
-            Krita.instance().writeSetting( "Project Pages", entry, str( default ) )
         else:
-            read = setting
-            if mode == "EVAL":
-                read = eval( read )
-            elif mode == "STR":
-                read = str( read )
-            elif mode == "INT":
-                read = int( read )
+            try:
+                read = setting
+                if mode == "EVAL":
+                    read = eval( read )
+                elif mode == "STR":
+                    read = str( read )
+                elif mode == "INT":
+                    read = int( read )
+            except:
+                read = default
+        Krita.instance().writeSetting( "Project Pages", entry, str( default ) )
         return read
+
 
     #endregion
     #region Menu ###################################################################
@@ -555,13 +574,11 @@ class ProjectPages_Docker( DockWidget ):
     def Document_Dim_Width( self, doc_width ):
         self.doc_width = doc_width
         self.Doc_Custom_Check()
-        Krita.instance().writeSetting( "Project Pages", "doc_width", str( self.doc_width ) )
         self.Control_Save()
         self.update()
     def Document_Dim_Height( self, doc_height ):
         self.doc_height = doc_height
         self.Doc_Custom_Check()
-        Krita.instance().writeSetting( "Project Pages", "doc_height", str( self.doc_height ) )
         self.Control_Save()
         self.update()
     def Document_Dim_Swap( self, doc_swap ):
