@@ -391,18 +391,16 @@ class ProjectPages_Docker( DockWidget ):
             read = default
         else:
             try:
-                read = setting
                 if mode == "EVAL":
-                    read = eval( read )
+                    read = eval( setting )
                 elif mode == "STR":
-                    read = str( read )
+                    read = str( setting )
                 elif mode == "INT":
-                    read = int( read )
+                    read = int( setting )
             except:
                 read = default
-        Krita.instance().writeSetting( "Project Pages", entry, str( default ) )
+        Krita.instance().writeSetting( "Project Pages", entry, str( read ) )
         return read
-
 
     #endregion
     #region Menu ###################################################################
