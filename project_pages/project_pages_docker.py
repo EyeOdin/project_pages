@@ -373,7 +373,8 @@ class ProjectPages_Docker( DockWidget ):
 
         try:
             self.Loader()
-        except:
+        except Exception as e:
+            QMessageBox.information( QWidget(), i18n( "Warnning" ), i18n( f"Project Pages | ERROR Load failed\nReason : {e}" ) )
             self.Variables()
             self.Loader()
 
@@ -1198,7 +1199,7 @@ class ProjectPages_Docker( DockWidget ):
                     self.Project_Thumbnail( self.recent_project )
                 else:
                     self.Project_Recent_Minus( project_zip )
-                    self.Warn_Message( "Project Pages : Invalid File Error\n\nSolve version conflict by importing files into a new project\n" )
+                    self.Warn_Message( "Project Pages | ERROR Invalid File\nSuggestion : Import files into a new project" )
             else:
                 self.File_Conflict( project_directory )
         else:
@@ -1659,9 +1660,9 @@ class ProjectPages_Docker( DockWidget ):
                 self.layout.page_list.addItem( item )
 
     def Canvas_Conflict( self ):
-        self.Warn_Message( "Project Pages : Active Pages Error\n\nClose all active Pages on Canvas to run\n" )
+        self.Warn_Message( "Project Pages | ERROR Edit conflict\nClose all active pages from canvas to run" )
     def File_Conflict( self, path ):
-        self.Warn_Message( "Project Pages : Namespace Conflict Error\n\nFolder with same name already exists\n" )
+        self.Warn_Message( "Project Pages | ERROR Namespace conflict\nFolder with same name already exists" )
         self.File_Location( path, "SELECT" ) # Shows the File that is causing conflict
     def File_Location( self, project_directory, mode ):
         # Variables
@@ -1684,7 +1685,7 @@ class ProjectPages_Docker( DockWidget ):
 
     def Files_Search( self, path, mode ):
         # UI
-        self.Warn_Message( "Project Pages : Search Starting")
+        self.Warn_Message( "Project Pages | SEARCH Start")
         self.layout.progress_bar.setMaximum( 100 )
         self.layout.progress_bar.setValue( 0 )
 
@@ -1709,7 +1710,7 @@ class ProjectPages_Docker( DockWidget ):
             elif mode == "PAGE":
                 if item not in self.found_images:
                     self.Page_Source( item )
-            try:QtCore.qDebug( f"PP Import | {item}" )
+            try:QtCore.qDebug( f"Project Pages | IMPORT {item}" )
             except:pass
             # Cycle
             index = self.Limit_Loop( index + 1, 100 )
@@ -1721,7 +1722,7 @@ class ProjectPages_Docker( DockWidget ):
         elif mode == "PAGE":
             self.Page_Update()
             self.Thumbnail_Redraw()
-        self.Warn_Message( "Project Pages : Search Finished")
+        self.Warn_Message( "Project Pages | SEARCH Finish")
 
         # UI Reset
         self.layout.progress_bar.setMaximum( 100 )
@@ -2114,7 +2115,7 @@ class ProjectPages_Docker( DockWidget ):
                 if node_i != None: # Avoids instant Krita Crash
                     ad.setActiveNode( node_i )
                 else:
-                    self.Warn_Message( "Project Pages : Layer Namespace Conflict Solved\n" )
+                    self.Warn_Message( "Project Pages | Solved namespace conflict\n" )
                     self.Layer_Rename()
     def Layer_Rename( self ):
         self.dialog.rename_report.clear()
