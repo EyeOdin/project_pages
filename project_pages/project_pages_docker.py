@@ -629,11 +629,13 @@ class ProjectPages_Docker( DockWidget ):
         # Display
         self.dialog.show()
         # Resize Geometry
-        screen_zero = QtWidgets.QDesktopWidget().screenGeometry( 0 ) # Size of monitor zero 0
-        width = screen_zero.width()
-        height = screen_zero.height()
+        qmw = Krita.instance().activeWindow().qwindow()
+        px = qmw.x()
+        py = qmw.y()
+        w2 = qmw.width() * 0.5
+        h2 = qmw.height() * 0.5
         size = 500
-        self.dialog.setGeometry( int( width*0.5-size*0.5 ), int( height*0.5-size*0.5 ), int( size ), int( size ) )
+        self.dialog.setGeometry( int( px + w2 - size * 0.5 ), int( py + h2 - size * 0.5 ), int( size ), int( size ) )
     def Menu_Manual( self ):
         url = "https://github.com/EyeOdin/project_pages/wiki"
         webbrowser.open_new( url )
@@ -2510,7 +2512,7 @@ class ProjectPages_Docker( DockWidget ):
                     ph = h2+1
                 # Selection
                 sel = Selection()
-                sel.select( px, py, pw, ph, 255 )
+                sel.select( int( px ), int( py ), int( pw ), int( ph ), 255 )
                 ad.setSelection( sel )
             else: # Custom
                 sel = ss
@@ -2520,7 +2522,7 @@ class ProjectPages_Docker( DockWidget ):
                 ph = sel.height()
 
             # Copy
-            byte_array = node.pixelData( px, py, pw, ph )
+            byte_array = node.pixelData( int( px ), int( py ), int( pw ), int( ph ) )
             self.Wait( ad )
             # New Node
             new_node = ad.createNode( name, "paintLayer" )
@@ -2529,7 +2531,7 @@ class ProjectPages_Docker( DockWidget ):
             self.Wait( ad )
 
             # Paste
-            new_node.setPixelData( byte_array, px, py, pw, ph )
+            new_node.setPixelData( byte_array, int( px ), int( py ), int( pw ), int( ph ) )
             self.Wait( ad )
 
             # Wait for everything in event queue.

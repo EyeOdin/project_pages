@@ -5,24 +5,52 @@
 
 
         <Action name="project_pages_mirror_fix_left">
+          <icon></icon>
           <text>Mirror Fix LEFT</text>
+          <whatsThis></whatsThis>
+          <toolTip></toolTip>
+          <iconText></iconText>
+          <activationFlags></activationFlags>
+          <activationConditions></activationConditions>
           <shortcut>none</shortcut>
           <isCheckable>false</isCheckable>
+          <statusTip></statusTip>
         </Action>
         <Action name="project_pages_mirror_fix_right">
+          <icon></icon>
           <text>Mirror Fix RIGHT</text>
+          <whatsThis></whatsThis>
+          <toolTip></toolTip>
+          <iconText></iconText>
+          <activationFlags></activationFlags>
+          <activationConditions></activationConditions>
           <shortcut>none</shortcut>
           <isCheckable>false</isCheckable>
+          <statusTip></statusTip>
         </Action>
         <Action name="project_pages_mirror_fix_top">
+          <icon></icon>
           <text>Mirror Fix TOP</text>
+          <whatsThis></whatsThis>
+          <toolTip></toolTip>
+          <iconText></iconText>
+          <activationFlags></activationFlags>
+          <activationConditions></activationConditions>
           <shortcut>none</shortcut>
           <isCheckable>false</isCheckable>
+          <statusTip></statusTip>
         </Action>
         <Action name="project_pages_mirror_fix_down">
+          <icon></icon>
           <text>Mirror Fix DOWN</text>
+          <whatsThis></whatsThis>
+          <toolTip></toolTip>
+          <iconText></iconText>
+          <activationFlags></activationFlags>
+          <activationConditions></activationConditions>
           <shortcut>none</shortcut>
           <isCheckable>false</isCheckable>
+          <statusTip></statusTip>
         </Action>
 
 

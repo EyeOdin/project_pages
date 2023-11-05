@@ -47,22 +47,20 @@ class ProjectPages_Extension( Extension ):
 
     def createActions( self, window ):
         # Main Menu
-        action_pigmento = window.createAction( "project_pages", "Project Pages", "tools/scripts" )
-        menu_mirror_fix = QtWidgets.QMenu( "project_pages", window.qwindow() )
+        menu_project_pages = QtWidgets.QMenu( "project_pages_menu", window.qwindow() )
+        action_project_pages = window.createAction( "project_pages_menu", "Project Pages", "tools/scripts" )
+        action_project_pages.setMenu( menu_project_pages )
 
-        # Sub Menu
-        action_mirror_fix = window.createAction( "mirror_fix", "Mirror Fix", "tools/scripts/project_pages" )
-        action_pigmento.setMenu( menu_mirror_fix )
-
-        menu_mirror_fix = QtWidgets.QMenu( "mirror_fix", window.qwindow() )
+        # Mirror Fix
+        menu_mirror_fix = QtWidgets.QMenu( "mirror_fix_menu", window.qwindow() )
+        action_mirror_fix = window.createAction( "mirror_fix_menu", "Mirror Fix", "tools/scripts/project_pages_menu" )
         action_mirror_fix.setMenu( menu_mirror_fix )
 
-        # Key Actions
-        action_mirror_fix_left  = window.createAction( "project_pages_mirror_fix_left",  "LEFT",  "tools/scripts/project_pages/mirror_fix" )
-        action_mirror_fix_right = window.createAction( "project_pages_mirror_fix_right", "RIGHT", "tools/scripts/project_pages/mirror_fix" )
-        action_mirror_fix_top   = window.createAction( "project_pages_mirror_fix_top",   "TOP",   "tools/scripts/project_pages/mirror_fix" )
-        action_mirror_fix_down  = window.createAction( "project_pages_mirror_fix_down",  "DOWN",  "tools/scripts/project_pages/mirror_fix" )
-        # Mirror Fix Connections
+        action_mirror_fix_left  = window.createAction( "project_pages_mirror_fix_left",  "LEFT",  "tools/scripts/project_pages_menu/mirror_fix_menu" )
+        action_mirror_fix_right = window.createAction( "project_pages_mirror_fix_right", "RIGHT", "tools/scripts/project_pages_menu/mirror_fix_menu" )
+        action_mirror_fix_top   = window.createAction( "project_pages_mirror_fix_top",   "TOP",   "tools/scripts/project_pages_menu/mirror_fix_menu" )
+        action_mirror_fix_down  = window.createAction( "project_pages_mirror_fix_down",  "DOWN",  "tools/scripts/project_pages_menu/mirror_fix_menu" )
+
         action_mirror_fix_left.triggered.connect( lambda: self.MIRROR_FIX_SIGNAL( "LEFT" ) )
         action_mirror_fix_right.triggered.connect( lambda: self.MIRROR_FIX_SIGNAL( "RIGHT" ) )
         action_mirror_fix_top.triggered.connect( lambda: self.MIRROR_FIX_SIGNAL( "TOP" ) )
