@@ -1,29 +1,29 @@
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/LOGO/project_pages_logo_S.png?raw=true)
+![Picture](https://raw.githubusercontent.com/EyeOdin/project_pages/master/project_pages/LOGO/project_pages_logo_S.png)
 
-## Purpose
+# Purpose
 
 Project Pages is a Krita plugin to Compile files into a single project file.
 
+# Features
 
-## Features
-* Recent Projects
+* List of Projects
 * List of Pages
-* Context Menus
-* Image connected to a Note
-* Page Template
-* Document Information ( XML )
-* Rename Layers
-* Guides ( List, Mirror )
+* Page Notes
+* Page Templates
+* Document Information ( metadata )
+* Document Rules and Guides
+* Layer Renaming
 * Mirror Fix
 * Read ![wiki](https://github.com/EyeOdin/project_pages/wiki) for more information
 
+# Preview
 
-## Preview
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_001.png?raw=true)
-![Picture](https://github.com/EyeOdin/project_pages/blob/main/project_pages/PREVIEWS/project_pages_002.png?raw=true)
+![Picture](https://raw.githubusercontent.com/EyeOdin/project_pages/master/project_pages/PREVIEWS/pp_p001.png)
 
+![Picture](https://raw.githubusercontent.com/EyeOdin/project_pages/master/project_pages/PREVIEWS/pp_p002.png)
 
-## Support
+# Support
+
 This project will remain Open source and available to all users.\
 Support with donations to keep the project alive and maintained.
 
