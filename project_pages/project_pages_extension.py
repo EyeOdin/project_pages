@@ -15,14 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#region Import Modules #############################################################
+#region Import Modules
 
 from krita import *
 from PyQt5 import Qt, QtWidgets, QtCore, QtGui, uic
 from PyQt5.Qt import Qt
 
 #endregion
-#region Global Variables ###########################################################
+#region Global Variables
 
 EXTENSION_ID = 'pykrita_project_pages_extension'
 
@@ -30,12 +30,10 @@ EXTENSION_ID = 'pykrita_project_pages_extension'
 
 
 class ProjectPages_Extension( Extension ):
-    """
-    Extension Shortcuts.
-    """
+
     SIGNAL_MIRROR_FIX = QtCore.pyqtSignal( str )
 
-    #region Initialize #############################################################
+    #region Initialize
 
     def __init__( self, parent ):
         super().__init__( parent )
@@ -43,7 +41,7 @@ class ProjectPages_Extension( Extension ):
         pass
 
     #endregion
-    #region Actions ################################################################
+    #region Actions
 
     def createActions( self, window ):
         # Main Menu
@@ -67,7 +65,7 @@ class ProjectPages_Extension( Extension ):
         action_mirror_fix_down.triggered.connect( lambda: self.MIRROR_FIX_SIGNAL( "DOWN" ) )
 
     #endregion
-    #region Signal #################################################################
+    #region Signal
 
     def MIRROR_FIX_SIGNAL( self, mode ):
         self.SIGNAL_MIRROR_FIX.emit( mode )

@@ -10,11 +10,6 @@
     <height>500</height>
    </rect>
   </property>
-  <property name="font">
-   <font>
-    <family>Liberation Mono</family>
-   </font>
-  </property>
   <layout class="QGridLayout" name="projectpages_widget_layout">
    <property name="leftMargin">
     <number>0</number>
@@ -60,7 +55,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>130</height>
+          <height>140</height>
          </size>
         </property>
         <property name="focusPolicy">
@@ -76,7 +71,10 @@
          <number>0</number>
         </property>
         <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOff</enum>
+         <enum>Qt::ScrollBarAsNeeded</enum>
+        </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QAbstractScrollArea::AdjustToContents</enum>
         </property>
         <property name="editTriggers">
          <set>QAbstractItemView::AllEditTriggers</set>
@@ -88,7 +86,7 @@
          <bool>true</bool>
         </property>
         <property name="dragDropMode">
-         <enum>QAbstractItemView::InternalMove</enum>
+         <enum>QAbstractItemView::DragOnly</enum>
         </property>
         <property name="defaultDropAction">
          <enum>Qt::MoveAction</enum>
@@ -105,6 +103,9 @@
           <height>100</height>
          </size>
         </property>
+        <property name="movement">
+         <enum>QListView::Snap</enum>
+        </property>
         <property name="flow">
          <enum>QListView::LeftToRight</enum>
         </property>
@@ -118,7 +119,7 @@
          <bool>true</bool>
         </property>
         <property name="itemAlignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         <set>Qt::AlignBaseline|Qt::AlignCenter|Qt::AlignHCenter|Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
         <property name="sortingEnabled">
          <bool>false</bool>
@@ -137,6 +138,9 @@
          <enum>Qt::Horizontal</enum>
         </property>
         <widget class="QListWidget" name="page_list">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
            <horstretch>0</horstretch>
@@ -202,6 +206,9 @@
          </property>
         </widget>
         <widget class="QTextEdit" name="text_note">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
            <horstretch>0</horstretch>
@@ -216,7 +223,7 @@
          </property>
          <property name="font">
           <font>
-           <family>Liberation Mono</family>
+           <family>Arial</family>
            <pointsize>10</pointsize>
           </font>
          </property>
@@ -235,8 +242,8 @@
          <property name="tabStopWidth">
           <number>40</number>
          </property>
-         <property name="placeholderText">
-          <string>NOTES</string>
+         <property name="acceptRichText">
+          <bool>false</bool>
          </property>
         </widget>
        </widget>
@@ -340,13 +347,13 @@
            <property name="minimumSize">
             <size>
              <width>40</width>
-             <height>25</height>
+             <height>22</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
              <width>40</width>
-             <height>25</height>
+             <height>22</height>
             </size>
            </property>
            <property name="focusPolicy">

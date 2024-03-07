@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#region Imports ####################################################################
+#region Imports
 
 # Python Modules
 import os
@@ -33,16 +33,16 @@ from krita import *
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # Project Pages Modules
 from .project_pages_extension import ProjectPages_Extension
-from .project_pages_modulo import ( 
+from .project_pages_modulo import (
     MirrorFix_Button,
     )
 
 #endregion
-#region Global Variables ###########################################################
+#region Global Variables
 
 # Plugin
 DOCKER_NAME = "Project Pages"
-project_pages_version = "2023_08_22"
+project_pages_version = "2024_03_02"
 
 # Project
 file_extension = "zip"
@@ -97,11 +97,8 @@ sec_ano = ano * sec_mes
 
 
 class ProjectPages_Docker( DockWidget ):
-    """
-    Compile multiple files into a single project file
-    """
 
-    #region Initialize #############################################################
+    #region Initialize
 
     def __init__( self ):
         super( ProjectPages_Docker, self ).__init__()
@@ -115,6 +112,7 @@ class ProjectPages_Docker( DockWidget ):
         self.Timer()
         self.Extension()
         self.Settings()
+        self.Plugin_Load()
 
     def User_Interface( self ):
         # Window
@@ -129,82 +127,63 @@ class ProjectPages_Docker( DockWidget ):
         self.directory_plugin = str( os.path.dirname( os.path.realpath( __file__ ) ) )
 
         # Widget Docker
-        self.layout = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_docker.ui" ), QWidget( self ) )
+        self.layout = uic.loadUi( os.path.abspath( os.path.join( self.directory_plugin, "project_pages_docker.ui" ) ), QWidget( self ) )
         self.setWidget( self.layout )
 
         # Settings
-        self.dialog = uic.loadUi( os.path.join( self.directory_plugin, "project_pages_settings.ui" ), QDialog( self ) )
+        self.dialog = uic.loadUi( os.path.abspath( os.path.join( self.directory_plugin, "project_pages_settings.ui" ) ), QDialog( self ) )
         self.dialog.setWindowTitle( "Project Pages : Settings" )
     def Variables( self ):
         # Variables
         self.project_active = False
         self.project_auto_save = False
-        self.widget_height = 25
-        self.tn_size = 100
+        self.thumbnail_size = 100
+        self.note_textwrap = False
 
         # Color
         self.color_alpha = QColor( 0, 0, 0, 0 )
-        self.tn_color = QColor( "#043764" )
+        self.color_thumbnail = QColor( "#043764" )
 
         # Paths
-        self.directory_plugin = None # Plugin Location
         self.project_zip = None # Original ZIP file
         self.project_directory = None # Project UnZIPped directory
         self.project_control = None
         self.project_images = None
         self.project_texts = None
         self.project_trash = None
-        self.recent_project = []
+        self.project_recent = []
 
         # Index
         self.found_images = []
         self.found_texts = []
-        self.index = {
-            "image":0,
-            "text":0,
-            }
+        self.found_index = { "image" : 0, "text" : 0 }
 
         # Information
         self.work_hours = 0
-
-        # Layers
-        self.check_space = False
-        self.check_replace = False
-        self.check_prefix = False
-        self.check_suffix = False
-        self.rename_strings = {
-            "space" : "",
-            "replace_old" : "",
-            "replace_new" : "",
-            "prefix_folder" : "",
-            "prefix_layer" : "",
-            "suffix_folder" : "",
-            "suffix_layer" : "",
-            }
 
         # Document
         self.doc_basename = "page"
         self.doc_template = [
             # Texture
-            {"index":"Texture 256", "width":256, "height":256 },
-            {"index":"Texture 1024", "width":1024, "height":1024 },
-            {"index":"Texture 2048", "width":2048, "height":2048 },
-            {"index":"Texture 4096", "width":4096, "height":4096 },
+            { "index" : "Texture 256",          "width":256,  "height":256 },
+            { "index" : "Texture 1024",         "width":1024, "height":1024 },
+            { "index" : "Texture 2048",         "width":2048, "height":2048 },
+            { "index" : "Texture 4096",         "width":4096, "height":4096 },
             # Paper
-            {"index":"Paper A3", "width":3508, "height":4960 },
-            {"index":"Paper A4", "width":2480, "height":3508 },
-            {"index":"Paper A5", "width":1754, "height":2480 },
-            {"index":"Paper A6", "width":1240, "height":1754 },
+            { "index" : "Paper A3",             "width":3508, "height":4960 },
+            { "index" : "Paper A4",             "width":2480, "height":3508 },
+            { "index" : "Paper A5",             "width":1754, "height":2480 },
+            { "index" : "Paper A6",             "width":1240, "height":1754 },
             # Screen
-            {"index":"Screen 480p SD", "width":640, "height":480 },
-            {"index":"Screen 720p HD", "width":1280, "height":720 },
-            {"index":"Screen 1080p FHD", "width":1920, "height":1080 },
-            {"index":"Screen 1440p QHD", "width":2560, "height":1440 },
-            {"index":"Screen 1080p 2k", "width":2048, "height":1080 },
-            {"index":"Screen 2160p UHD 4k", "width":3840, "height":2160 },
-            {"index":"Screen 4320p FUHD 8k", "width":7680, "height":4320 },
+            { "index" : "Screen 480p SD",       "width":640,  "height":480 },
+            { "index" : "Screen 720p HD",       "width":1280, "height":720 },
+            { "index" : "Screen 1080p FHD",     "width":1920, "height":1080 },
+            { "index" : "Screen 1440p QHD",     "width":2560, "height":1440 },
+            { "index" : "Screen 1080p 2k",      "width":2048, "height":1080 },
+            { "index" : "Screen 2160p UHD 4k",  "width":3840, "height":2160 },
+            { "index" : "Screen 4320p FUHD 8k", "width":7680, "height":4320 },
             # Custom ( has to be last in the list always )
-            {"index":"Custom", "width":None, "height":None },
+            { "index" : "Custom",               "width":None, "height":None },
             ]
         self.doc_width = 2480
         self.doc_height = 3508
@@ -224,6 +203,25 @@ class ProjectPages_Docker( DockWidget ):
         self.guide_snap = False
         self.guide_visible = False
         self.guide_lock = False
+
+        # Layers
+        self.layer_space = False
+        self.layer_replace = False
+        self.layer_prefix = False
+        self.layer_suffix = False
+        self.layer_string = {
+            "space" : "",
+            "replace_old" : "",
+            "replace_new" : "",
+            "prefix_folder" : "",
+            "prefix_layer" : "",
+            "suffix_folder" : "",
+            "suffix_layer" : "",
+            }
+
+        # System
+        self.sow_project = False
+        self.sow_dockers = False
     def Connections( self ):
         # Panels
         self.layout.project_list.doubleClicked.connect( self.Project_Open )
@@ -238,6 +236,7 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.tab_widget.tabBarClicked.connect( self.Menu_Tabs )
 
         # Dialog Template
+        self.dialog.note_textwrap.toggled.connect( self.Note_TextWrap )
         self.dialog.doc_basename.textChanged.connect( self.Document_Basename )
         self.dialog.doc_template.currentTextChanged.connect( self.Document_Template )
         self.dialog.doc_width.valueChanged.connect( self.Document_Dim_Width )
@@ -261,20 +260,6 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.menu_money_rate.valueChanged.connect( self.Money_Rate )
         self.dialog.menu_money_total.valueChanged.connect( self.Money_Total )
         self.dialog.info_contact.itemClicked.connect( self.Information_Copy )
-        # Dialog Layers
-        self.dialog.check_space.toggled.connect( self.Layer_Space )
-        self.dialog.check_replace.toggled.connect( self.Layer_Replace )
-        self.dialog.check_prefix.toggled.connect( self.Layer_Prefix )
-        self.dialog.check_suffix.toggled.connect( self.Layer_Suffix )
-        self.dialog.replace_space.textChanged.connect( self.Rename_Strings )
-        self.dialog.replace_old.textChanged.connect( self.Rename_Strings )
-        self.dialog.replace_new.textChanged.connect( self.Rename_Strings )
-        self.dialog.prefix_folder.textChanged.connect( self.Rename_Strings )
-        self.dialog.prefix_layer.textChanged.connect( self.Rename_Strings )
-        self.dialog.suffix_folder.textChanged.connect( self.Rename_Strings )
-        self.dialog.suffix_layer.textChanged.connect( self.Rename_Strings )
-        self.dialog.rename_report.doubleClicked.connect( self.Layer_Select )
-        self.dialog.rename_layers.clicked.connect( self.Layer_Rename )
         # Dialog Guides
         self.dialog.guide_horizontal_mirror.toggled.connect( self.Guide_Horizontal_Mirror )
         self.dialog.guide_vertical_mirror.toggled.connect( self.Guide_Vertical_Mirror )
@@ -284,6 +269,23 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.guide_snap.toggled.connect( self.Guide_Snap )
         self.dialog.guide_visible.toggled.connect( self.Guide_Visible )
         self.dialog.guide_lock.toggled.connect( self.Guide_Lock )
+        # Dialog Layers
+        self.dialog.layer_space.toggled.connect( self.Layer_Space )
+        self.dialog.layer_replace.toggled.connect( self.Layer_Replace )
+        self.dialog.layer_prefix.toggled.connect( self.Layer_Prefix )
+        self.dialog.layer_suffix.toggled.connect( self.Layer_Suffix )
+        self.dialog.replace_space.textChanged.connect( self.Rename_Strings )
+        self.dialog.replace_old.textChanged.connect( self.Rename_Strings )
+        self.dialog.replace_new.textChanged.connect( self.Rename_Strings )
+        self.dialog.prefix_folder.textChanged.connect( self.Rename_Strings )
+        self.dialog.prefix_layer.textChanged.connect( self.Rename_Strings )
+        self.dialog.suffix_folder.textChanged.connect( self.Rename_Strings )
+        self.dialog.suffix_layer.textChanged.connect( self.Rename_Strings )
+        self.dialog.rename_report.doubleClicked.connect( self.Layer_Select )
+        self.dialog.rename_layers.clicked.connect( self.Layer_Rename )
+        # Dialog System
+        self.dialog.sow_project.toggled.connect( self.ShowOnWelcome_Project )
+        self.dialog.sow_dockers.toggled.connect( self.ShowOnWelcome_Dockers )
         # Notices
         self.dialog.manual.clicked.connect( self.Menu_Manual )
         self.dialog.license.clicked.connect( self.Menu_License )
@@ -336,8 +338,9 @@ class ProjectPages_Docker( DockWidget ):
         self.layout.progress_bar.setStyleSheet( "#progress_bar{background-color: rgba( 0, 0, 0, 0 );}" )
         self.dialog.scroll_area_contents_template.setStyleSheet( "#scroll_area_contents_template{background-color: rgba( 0, 0, 0, 20 );}" )
         self.dialog.scroll_area_contents_information.setStyleSheet( "#scroll_area_contents_information{background-color: rgba( 0, 0, 0, 20 );}" )
-        self.dialog.scroll_area_contents_layers.setStyleSheet( "#scroll_area_contents_layers{background-color: rgba( 0, 0, 0, 20 );}" )
         self.dialog.scroll_area_contents_guides.setStyleSheet( "#scroll_area_contents_guides{background-color: rgba( 0, 0, 0, 20 );}" )
+        self.dialog.scroll_area_contents_layers.setStyleSheet( "#scroll_area_contents_layers{background-color: rgba( 0, 0, 0, 20 );}" )
+        self.dialog.scroll_area_contents_system.setStyleSheet( "#scroll_area_contents_system{background-color: rgba( 0, 0, 0, 20 );}" )
         self.dialog.progress_bar.setStyleSheet( "#progress_bar{background-color: rgba( 0, 0, 0, 0 );}" )
 
         # Populate Combobox
@@ -355,37 +358,44 @@ class ProjectPages_Docker( DockWidget ):
         # Connect Extension Signals
         extension.SIGNAL_MIRROR_FIX.connect( self.MirrorFix_Run )
     def Settings( self ):
-        #region Variables
-
         # Directory Path
-        recent_project = self.Set_Read( "EVAL", "recent_project", self.recent_project )
-        for i in range( 0, len( recent_project ) ):
-            path = recent_project[i]
+        project_recent = self.Set_Read( "EVAL", "project_recent", self.project_recent )
+        for i in range( 0, len( project_recent ) ):
+            path = project_recent[i]
             exists = os.path.exists( path )
             if exists == True:
-                self.recent_project.append( path )
+                self.project_recent.append( path )
+
+        # Note
+        self.note_textwrap = self.Set_Read( "EVAL", "note_textwrap", self.note_textwrap )
 
         # Rename Strings
-        self.rename_strings = self.Set_Read( "EVAL", "rename_strings", self.rename_strings )
+        self.layer_string = self.Set_Read( "EVAL", "layer_string", self.layer_string )
 
-        #endregion
-        #region Loader
-
+        # Show on Welcome
+        self.sow_project = self.Set_Read( "EVAL", "sow_project", self.sow_project )
+        self.sow_dockers = self.Set_Read( "EVAL", "sow_dockers", self.sow_dockers )
+    def Plugin_Load( self ):
         try:
             self.Loader()
         except Exception as e:
-            QMessageBox.information( QWidget(), i18n( "Warnning" ), i18n( f"Project Pages | ERROR Load failed\nReason : {e}" ) )
+            self.Message_Warnning( "ERROR", f"Load\n{ e }" )
             self.Variables()
             self.Loader()
 
-        # endregion
-
     def Loader( self ):
         # Directory Path
-        self.Project_Thumbnail( self.recent_project )
+        self.Project_Thumbnail( self.project_recent )
+
+        # Note Text Wrap
+        self.dialog.note_textwrap.setChecked( self.note_textwrap )
 
         # Rename Strings
-        self.Rename_LOAD( self.rename_strings )
+        self.Rename_LOAD( self.layer_string )
+
+        # Show on Welcome
+        self.dialog.sow_project.setChecked( self.sow_project )
+        self.dialog.sow_dockers.setChecked( self.sow_dockers )
     def Set_Read( self, mode, entry, default ):
         setting = Krita.instance().readSetting( "Project Pages", entry, "" )
         if setting == "":
@@ -404,121 +414,154 @@ class ProjectPages_Docker( DockWidget ):
         return read
 
     #endregion
-    #region Menu ###################################################################
+    #region Menu
 
     # Context Menus
     def Menu_ProjectContext( self, event ):
+        #region Variables
+
         # Variables
         project_active = self.project_active
-
         # Selected Items
-        selected_item = self.layout.project_list.selectedItems()
-        selected_len = len( selected_item )
-        for i in range( 0, selected_len ):
-            selected_item[i] = selected_item[i].text()
+        count = self.layout.project_list.count()
+        select_item = self.layout.project_list.selectedItems()
+        select_length = len( select_item )
+        for i in range( 0, select_length ):
+            select_item[i] = select_item[i].text()
+
+        #endregion
+        #region Menu
 
         # Menu
-        cmenu = QMenu( self )
-        cmenu_header = cmenu.addSection( "Project" )
-        if selected_len > 0:
-            if project_active == False:
-                cmenu_open = cmenu.addAction( "Open" )
-                cmenu_clear = cmenu.addAction( "Clear" )
-            cmenu_location = cmenu.addAction( "Location" )
-            cmenu.addSeparator()
+        qmenu = QMenu( self )
+        qmenu_header = qmenu.addSection( "Project" )
+        action_open = qmenu.addAction( "Open" )
+        action_save = qmenu.addAction( "Save" )
+        action_location = qmenu.addAction( "Location" )
+        qmenu.addSeparator()
+        action_new = qmenu.addAction( "New" )
+        action_import = qmenu.addAction( "Import" )
+        action_search = qmenu.addAction( "Search" )
+        qmenu.addSeparator()
+        action_clear = qmenu.addAction( "Clear" )
+        action_close = qmenu.addAction( "Close" )
+
+        # Disable
+        if ( project_active == True or select_length == 0 ):
+            action_open.setEnabled( False )
         if project_active == False:
-            cmenu_new = cmenu.addAction( "New" )
-            cmenu_import = cmenu.addAction( "Import" )
-            cmenu_search = cmenu.addAction( "Search" )
-        else:
-            cmenu_save = cmenu.addAction( "Save" )
-            cmenu_close = cmenu.addAction( "Close" )
+            action_save.setEnabled( False )
+        if select_length == 0:
+            action_location.setEnabled( False )
+        if project_active == True:
+            action_new.setEnabled( False )
+            action_import.setEnabled( False )
+            action_search.setEnabled( False )
+        if ( project_active == True or select_length == 0 ):
+            action_clear.setEnabled( False )
+        if project_active == False:
+            action_close.setEnabled( False )
+
+        #endregion
+        #region Actions
 
         # Execute
         position = event.globalPos()
-        action = cmenu.exec_( position )
+        action = qmenu.exec_( position )
 
         # Triggers
-        if selected_len > 0:
-            if project_active == False:
-                if action == cmenu_open:
-                    self.Project_Recent_Open( selected_item[0] )
-                if action == cmenu_clear:
-                    self.Project_Recent_Clear( selected_item[0] )
-            if action == cmenu_location:
-                index = self.layout.project_list.currentRow()
-                path = self.recent_project[index]
-                self.File_Location( path, "SELECT" )
-        if project_active == False:
-            if action == cmenu_new:
-                self.Project_New()
-            if action == cmenu_import:
-                self.Project_Import()
-            if action == cmenu_search:
-                self.Project_Search()
-        else:
-            if action == cmenu_save:
-                self.ZIP_Save()
-            if action == cmenu_close:
-                self.ZIP_Close()
+        if action == action_open:
+            # self.Project_Recent_Open( select_item[0] )
+            self.Project_Open()
+        if action == action_save:
+            self.ZIP_Save()
+        if action == action_location:
+            index = self.layout.project_list.currentRow()
+            path = self.project_recent[index]
+            self.File_Location( path, "SELECT" )
+        if action == action_new:
+            self.Project_New()
+        if action == action_import:
+            self.Project_Import()
+        if action == action_search:
+            self.Project_Search()
+        if action == action_clear:
+            self.Project_Recent_Clear( select_item[0] )
+        if action == action_close:
+            self.ZIP_Close()
+
+        #endregion
     def Menu_PageContext( self, event ):
         if self.project_active == True:
-            # Selected Items
-            page_item = self.layout.page_list.selectedItems()
-            page_len = len( page_item )
-            for i in range( 0, page_len ):
-                page_item[i] = page_item[i].text()
+            #region Variable
 
+            # Selected Items
+            select_item = self.layout.page_list.selectedItems()
+            select_length = len( select_item )
+            for i in range( 0, select_length ):
+                select_item[i] = select_item[i].text()
             # All Items are Closed Check
             closed = self.Items_Closed()
 
-            # Actions
-            cmenu = QMenu( self )
-            cmenu_header = cmenu.addSection( "Page" )
-            if page_len == 1:
-                cmenu_open = cmenu.addAction( "Open" )
-            cmenu_new = cmenu.addAction( "New" )
-            cmenu_import = cmenu.addAction( "Import" )
-            cmenu_search = cmenu.addAction( "Search" )
-            if closed == True:
-                cmenu.addSeparator()
-                cmenu_rename = cmenu.addAction( "Rename" )
-                cmenu_export = cmenu.addAction( "Export" )
-            if page_len > 0:
-                cmenu.addSeparator()
-                cmenu_thumbnail = cmenu.addAction( "Thumbnail" )
-                cmenu_delete = cmenu.addAction( "Delete" )
+            #endregion
+            #region Menu
+
+            # Menu
+            qmenu = QMenu( self )
+            action_header = qmenu.addSection( "Page" )
+            action_open = qmenu.addAction( "Open" )
+            action_new = qmenu.addAction( "New" )
+            action_import = qmenu.addAction( "Import" )
+            action_search = qmenu.addAction( "Search" )
+            menu_batch = qmenu.addMenu( "Batch" )
+            action_rename = menu_batch.addAction( "Rename" )
+            action_export = menu_batch.addAction( "Export" )
+            action_thumbnail = qmenu.addAction( "Thumbnail" )
+            action_trash = qmenu.addAction( "Trash" )
+
+            # Disable
+            if select_length == 0:
+                action_open.setEnabled( False )
+            if closed == False:
+                menu_batch.setEnabled( False )
+                action_rename.setEnabled( False )
+                action_export.setEnabled( False )
+            if select_length == 0:
+                action_thumbnail.setEnabled( False )
+                action_trash.setEnabled( False )
+
+            #endregion
+            #region Action
 
             # Execute
             position = event.globalPos()
-            action = cmenu.exec_( position )
+            action = qmenu.exec_( position )
 
             # Triggers
-            if page_len == 1:
-                if action == cmenu_open:
-                    self.Page_Open()
-            if action == cmenu_new:
+            if action == action_open:
+                self.Page_Open()
+            if action == action_new:
                 self.Page_New()
-            if action == cmenu_import:
+            if action == action_import:
                 self.Page_Import()
-            if action == cmenu_search:
+            if action == action_search:
                 self.Page_Search()
-            if closed == True:
-                if action == cmenu_rename:
-                    self.Page_Rename()
-                if action == cmenu_export:
-                    self.Page_Export()
-            if page_len > 0:
-                if action == cmenu_thumbnail:
-                    self.Page_Thumbnail( page_item[0] )
-                if action == cmenu_delete:
-                    self.Page_Delete( page_item )
+            if action == action_rename:
+                self.Page_Rename()
+            if action == action_export:
+                self.Page_Export()
+            if action == action_thumbnail:
+                self.Page_Project_Thumbnail( select_item[0] )
+            if action == action_trash:
+                self.Page_Trash( select_item )
+
+            #endregion
     def Menu_DirectoryContext( self, event ):
         if self.project_active == True:
             # Folder
             directory = self.project_directory
             dirfiles = os.listdir( directory )
-            fullpaths = map( lambda name: os.path.join( directory, name ), dirfiles )
+            fullpaths = map( lambda name: os.path.abspath( os.path.join( directory, name ) ), dirfiles )
             folders = []
             folders.append( self.project_directory )
             for f in fullpaths:
@@ -528,17 +571,17 @@ class ProjectPages_Docker( DockWidget ):
                 folders.sort()
 
             # Actions
-            cmenu = QMenu( self )
+            qmenu = QMenu( self )
             actions = {}
             for i in range( 0, len( folders ) ):
                 child = str( os.path.basename( folders[i] ) )
-                actions[i] = cmenu.addAction( child )
+                actions[i] = qmenu.addAction( child )
 
             # Execute
             geo = self.layout.mode.geometry()
             qpoint = geo.bottomLeft()
             position = self.layout.footer_widget.mapToGlobal( qpoint )
-            action = cmenu.exec_( position )
+            action = qmenu.exec_( position )
 
             # Triggers
             for i in range( 0, len( folders ) ):
@@ -546,6 +589,15 @@ class ProjectPages_Docker( DockWidget ):
                     path = str( folders[i] )
                     self.File_Location( path, "OPEN" )
                     break
+
+    # Note
+    def Note_TextWrap( self, boolean ):
+        self.note_textwrap = boolean
+        if boolean == False:
+            self.layout.text_note.setLineWrapMode( QTextEdit.NoWrap )
+        if boolean == True:
+            self.layout.text_note.setLineWrapMode( QTextEdit.WidgetWidth )
+        Krita.instance().writeSetting( "Project Pages", "note_textwrap", str( self.note_textwrap ) )
 
     # Page Template
     def Document_Basename( self, doc_basename ):
@@ -620,6 +672,27 @@ class ProjectPages_Docker( DockWidget ):
             gv = self.guide_string( self.dialog.guide_vertical_list )
             self.dialog.doc_gv.setText( gv )
 
+    # System
+    def ShowOnWelcome_Project( self, sow_project ):
+        self.sow_project = sow_project
+        try:self.setProperty( "ShowOnWelcomePage", sow_project )
+        except:pass
+        Krita.instance().writeSetting( "Project Pages", "sow_project", str( self.sow_project ) )
+    def ShowOnWelcome_Dockers( self, sow_dockers ):
+        self.sow_dockers = sow_dockers
+        Krita.instance().writeSetting( "Project Pages", "sow_dockers", str( self.sow_dockers ) )
+    def Welcome_Dockers( self ):
+        # Project Pages
+        if self.sow_project == True:
+            try:self.setProperty( "ShowOnWelcomePage", True )
+            except:pass
+        # Dockers
+        if self.sow_dockers == True:
+            dockers = Krita.instance().dockers()
+            for d in dockers:
+                try:d.setProperty( "ShowOnWelcomePage", True )
+                except:pass
+
     # Tabs
     def Menu_Tabs( self ):
         self.Information_Read()
@@ -659,7 +732,20 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.pushbutton_gv.blockSignals( boolean )
 
     #endregion
-    #region Management #############################################################
+    #region Management
+
+    def Message_Log( self, operation, message ):
+        string = f"Project Pages | { operation } { message }"
+        try:QtCore.qDebug( string )
+        except:pass
+    def Message_Warnning( self, operation, message ):
+        string = f"Project Pages | { operation } { message }"
+        QMessageBox.information( QWidget(), i18n( "Warnning" ), i18n( string ) )
+    def Message_Float( self, operation, message, icon ):
+        ki = Krita.instance()
+        string = f"Project Pages | { operation } { message }"
+        try:ki.activeWindow().activeView().showFloatingMessage( string, ki.icon( icon ), 5000, 0 )
+        except:pass
 
     def Limit_Range( self, value, minimum, maximum ):
         if value <= minimum:
@@ -683,22 +769,20 @@ class ProjectPages_Docker( DockWidget ):
     def Check_Active( self ):
         check = False
         if ( ( self.canvas() is not None ) and ( self.canvas().view() is not None ) ):
-            active = Krita.instance().activeDocument().fileName()
+            active = os.path.abspath( Krita.instance().activeDocument().fileName() )
             for i in range( 0, len( self.found_images ) ): # Project Pages Open
-                page_i = self.found_images[i]
+                page_i = os.path.abspath( self.found_images[i] )
                 if active == page_i:
                     check = True
                     break
-        else:
-            pass
         return check
     def Check_Documents( self ):
         check = True
         documents = Krita.instance().documents()
         for d in range( 0, len( documents ) ):
-            doc_d = documents[d].fileName()
+            doc_d = os.path.abspath( documents[d].fileName() )
             for i in range( 0, len( self.found_images ) ): # Project Pages Open
-                page_i = self.found_images[i]
+                page_i = os.path.abspath( self.found_images[i] )
                 if doc_d == page_i:
                     check = False
                     break
@@ -830,11 +914,18 @@ class ProjectPages_Docker( DockWidget ):
         height = self.height()
         QtCore.qDebug( "size = " + str( width ) + " x "  + str( height ) )
 
-    def Warn_Message( self, string ):
-        QMessageBox.information( QWidget(), i18n( "Warnning" ), i18n( string ) )
+    def Print_Path( self ):
+        QtCore.qDebug( "---------------------" )
+        QtCore.qDebug( f"project_zip       = { self.project_zip }" )
+        QtCore.qDebug( f"project_directory = { self.project_directory }" )
+        QtCore.qDebug( f"project_control   = { self.project_control }" )
+        QtCore.qDebug( f"project_images    = { self.project_images }" )
+        QtCore.qDebug( f"project_texts     = { self.project_texts }" )
+        QtCore.qDebug( f"project_trash     = { self.project_trash }" )
+        QtCore.qDebug( f"project_recent    = { self.project_recent }" )
 
     #endregion
-    #region Project Pages and Krita ################################################
+    #region Project Pages and Krita
 
     def Krita_to_ProjectPages( self ):
         if ( ( self.canvas() is not None ) and ( self.canvas().view() is not None ) ):
@@ -888,12 +979,12 @@ class ProjectPages_Docker( DockWidget ):
             self.Guide_Lock( False )
 
     #endregion
-    #region Index ##################################################################
+    #region Index
 
     def Index_Range( self, images, texts ):
         # Variables
-        self.index["image"] = 0
-        self.index["text"] = 0
+        self.found_index["image"] = 0
+        self.found_index["text"] = 0
 
         # Block Signals
         self.layout.page_index.blockSignals( True )
@@ -910,7 +1001,7 @@ class ProjectPages_Docker( DockWidget ):
             self.layout.page_index.setMinimum( 0 )
             self.layout.page_index.setMaximum( 0 )
         self.layout.page_index.setValue( num )
-        self.layout.page_index.setSuffix( ":" + str( total ) )
+        self.layout.page_index.setSuffix( f":{ total }" )
         # Block Signals
         self.layout.page_index.blockSignals( False )
     def Index_Number( self, index ):
@@ -932,8 +1023,8 @@ class ProjectPages_Docker( DockWidget ):
                 name = self.Path_Components( self.found_texts[i] )
                 if image_name == name:
                     # Index
-                    self.index["image"] = self.layout.page_list.currentRow() # Widget index
-                    self.index["text"] = i # file index
+                    self.found_index["image"] = self.layout.page_list.currentRow() # Widget index
+                    self.found_index["text"] = i # file index
                     # Read Text
                     with open( path, "r" ) as note:
                         data = note.read()
@@ -944,14 +1035,14 @@ class ProjectPages_Docker( DockWidget ):
                         break
 
     #endregion
-    #region Panels #################################################################
+    #region Panels
 
     def Text_Load( self ):
         if self.project_active == True:
             # Update Index
             self.Index_Set()
             # Index
-            index = int( self.index["image"] ) + 1
+            index = int( self.found_index["image"] ) + 1
             total = ":" + str( len( self.found_images ) )
             self.layout.page_index.blockSignals( True )
             self.layout.page_index.setValue( index )
@@ -960,13 +1051,13 @@ class ProjectPages_Docker( DockWidget ):
     def Text_Save( self ):
         if ( self.project_active == True and len( self.found_texts ) > 0 ):
             text_block = self.layout.text_note.toPlainText()
-            file_txt = self.found_texts[ self.index["text"] ]
+            file_txt = self.found_texts[ self.found_index["text"] ]
             note = open( file_txt, "w" )
             note.write( text_block )
             note.close()
 
     #endregion
-    #region Project ################################################################
+    #region Project
 
     def Project_New( self ):
         file_dialog = QFileDialog( QWidget( self ) )
@@ -975,120 +1066,102 @@ class ProjectPages_Docker( DockWidget ):
         if ( path != "" and path != "." ):
             name, boolean = QtWidgets.QInputDialog.getText( self, 'Project Pages', 'Select Project Name' )
             if boolean == True:
-                self.ZIP_New( path, name + ".project_pages" )
+                self.ZIP_New( path, f"{ name }.project_pages" )
     def Project_Import( self ):
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.AnyFile )
-        project_zip = file_dialog.getOpenFileName( self, "Select Project {} File".format( file_extension.upper() ), "", str( "*."+file_extension ) )
-        project_zip = project_zip[0]
-        if ( project_zip != "" and project_zip != "." and self.project_zip != project_zip ):
-            self.ZIP_Open( project_zip )
+        path = file_dialog.getOpenFileName( self, f"Select Project { file_extension.upper() } File", "", f"*.{ file_extension }" )[0]
+        if ( path != "" and path != "." and self.project_zip != path ):
+            self.ZIP_Open( path )
     def Project_Open( self ):
-        project_item = self.layout.project_list.selectedItems()[0].text()
-        self.Project_Recent_Open( project_item )
-    def Project_Recent_Open( self, project_item ):
-        for i in range( 0, len( self.recent_project ) ):
-            project_i = self.recent_project[i]
-            name = os.path.basename( project_i ).replace( ".project_pages.zip", "" )
-            if name == project_item:
-                path = self.recent_project[i]
-                self.ZIP_Open( str( path ) )
-                self.Project_Recent_Add( project_i )
-                break
+        index = self.layout.project_list.currentRow()
+        item = self.project_recent[index]
+        self.ZIP_Open( item )
+        self.Project_Recent_Add( item )
     def Project_Search( self ):
-        # Select Folder
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.DirectoryOnly )
         path = file_dialog.getExistingDirectory( self, "Select Search Directory" )
         if ( path != "" and path != "." ):
-            self.Files_Search( path, "PROJECT" )
+            self.File_Search( path, "PROJECT" )
 
     def Project_Recent_Add( self, path ):
         # List Limit
         limit = 100
-        length = len( self.recent_project )
+        length = len( self.project_recent )
         if length > limit:
-            self.recent_project.pop( -1 )
-
+            self.project_recent.pop( -1 )
         # Insert Path to List
-        if path not in self.recent_project:
-            self.recent_project.insert( 0, path )
-        else:
-            # Swap Positions
-            index = self.recent_project.index( path )
-            self.recent_project.pop( index )
-            self.recent_project.insert( 0, path )
-
+        if path in self.project_recent:
+            self.project_recent.remove( path )
+        self.project_recent.insert( 0, path )
         # Update
-        self.Project_Thumbnail( self.recent_project )
-        Krita.instance().writeSetting( "Project Pages", "recent_project", str( self.recent_project ) )
+        self.Project_Thumbnail( self.project_recent )
+        Krita.instance().writeSetting( "Project Pages", "project_recent", str( self.project_recent ) )
     def Project_Recent_Minus( self, path ):
-        if path in self.recent_project:
-            index = self.recent_project.index( path )
-            self.recent_project.pop( index )
+        # Minus from List
+        if path in self.project_recent:
+            index = self.project_recent.index( path )
+            self.project_recent.pop( index )
         # Update
-        self.Project_Thumbnail( self.recent_project )
-        Krita.instance().writeSetting( "Project Pages", "recent_project", str( self.recent_project ) )
+        self.Project_Thumbnail( self.project_recent )
+        Krita.instance().writeSetting( "Project Pages", "project_recent", str( self.project_recent ) )
     def Project_Recent_Clear( self, project_item ):
-        for i in range( 0, len( self.recent_project ) ):
-            name = os.path.basename( self.recent_project[i] ).replace( ".project_pages.zip", "" )
+        for i in range( 0, len( self.project_recent ) ):
+            name = os.path.basename( self.project_recent[i] ).replace( ".project_pages.zip", "" )
             if name == project_item:
-                path = self.recent_project[i]
+                path = self.project_recent[i]
                 self.Project_Recent_Minus( path )
                 break
-        self.Project_Thumbnail( self.recent_project )
-        Krita.instance().writeSetting( "Project Pages", "recent_project", str( self.recent_project ) )
+        self.Project_Thumbnail( self.project_recent )
+        Krita.instance().writeSetting( "Project Pages", "project_recent", str( self.project_recent ) )
 
-    def Project_Thumbnail( self, recent_project ):
+    def Project_Thumbnail( self, project_recent ):
         # Clean Previous
         self.layout.project_list.clear()
 
         # Items
-        if len( recent_project ) > 0:
-            for i in range( 0, len( recent_project ) ):
-                # Variables
-                path = recent_project[i]
-                basename = os.path.basename( path ).replace( ".project_pages.zip", "" )
-
-                # Create Items
-                item = QListWidgetItem( basename )
-                size = 100
-                # Thumbnail
-                bg = QPixmap( size, size )
-                bg.fill( self.color_alpha )
-                # Zip File Thumbnail
-                if zipfile.is_zipfile( path ):
-                    name = "thumbnail.png"
-                    archive = zipfile.ZipFile( path, "r" )
-                    archive_open = archive.open( name )
-                    archive_read = archive_open.read()
-                    qimage = QImage()
-                    qimage.loadFromData( archive_read )
-                    if qimage.isNull() == False:
-                        # QPixmap
-                        qpixmap = QPixmap().fromImage( qimage )
-                        pix = qpixmap.scaled( size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation )
-                        # Variables
-                        w = pix.width()
-                        h = pix.height()
-                        px = int( ( size*0.5 ) - ( w*0.5 ) )
-                        py = int( ( size*0.5 ) - ( h*0.5 ) )
-                        # Composed Image
-                        painter = QPainter( bg )
-                        painter.drawPixmap( px, py, pix )
-                        painter.end()
-                        # Item
-                        qicon = QIcon( bg )
-                        item.setIcon( qicon )
-                        self.layout.project_list.addItem( item )
+        for i in range( 0, len( project_recent ) ):
+            # Variables
+            path = project_recent[i]
+            basename = os.path.basename( path ).replace( ".project_pages.zip", "" )
+            # Create Items
+            item = QListWidgetItem( basename )
+            size = 100
+            # Thumbnail
+            bg = QPixmap( size, size )
+            bg.fill( self.color_alpha )
+            # Zip File Thumbnail
+            if zipfile.is_zipfile( path ):
+                name = "thumbnail.png"
+                archive = zipfile.ZipFile( path, "r" )
+                data = archive.open( name ).read()
+                qpixmap = QPixmap()
+                qpixmap.loadFromData( data )
+                if qpixmap.isNull() == False:
+                    # Scale
+                    pix = qpixmap.scaled( size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation )
+                    # Variable
+                    w = pix.width()
+                    h = pix.height()
+                    px = int( ( size*0.5 ) - ( w*0.5 ) )
+                    py = int( ( size*0.5 ) - ( h*0.5 ) )
+                    # Composed Image
+                    painter = QPainter( bg )
+                    painter.drawPixmap( px, py, pix )
+                    painter.end()
+                    # Item
+                    qicon = QIcon( bg )
+                    item.setIcon( qicon )
+                    self.layout.project_list.addItem( item )
 
     #endregion
-    #region ZIP operations #########################################################
+    #region ZIP operations
 
     def ZIP_New( self, path, name ):
         if self.project_active == False:
             # Paths
-            project_directory = os.path.join( path , name )
+            project_directory = os.path.abspath( os.path.join( path , name ) )
             project_zip = project_directory + "." + file_extension
 
             exists = ( os.path.exists( project_directory ) ) and ( os.path.exists( project_zip ) )
@@ -1097,13 +1170,13 @@ class ProjectPages_Docker( DockWidget ):
                 self.Project_Recent_Add( project_zip )
 
                 # Paths
-                self.project_zip = project_zip
+                self.project_zip = os.path.abspath ( project_zip )
                 self.project_directory = project_directory
-                self.project_control = os.path.join( project_directory, "control.eo" )
-                self.project_thumbnail = os.path.join( project_directory, "thumbnail.png" )
-                self.project_images = os.path.join( project_directory, "IMAGES" )
-                self.project_texts = os.path.join( project_directory, "TEXTS" )
-                self.project_trash = os.path.join( project_directory, "TRASH" )
+                self.project_control = os.path.abspath( os.path.join( project_directory, "control.eo" ) )
+                self.project_thumbnail = os.path.abspath( os.path.join( project_directory, "thumbnail.png" ) )
+                self.project_images = os.path.abspath( os.path.join( project_directory, "IMAGES" ) )
+                self.project_texts = os.path.abspath( os.path.join( project_directory, "TEXTS" ) )
+                self.project_trash = os.path.abspath( os.path.join( project_directory, "TRASH" ) )
 
                 # Create Project Folders
                 os.mkdir( self.project_directory )
@@ -1115,8 +1188,8 @@ class ProjectPages_Docker( DockWidget ):
                 file = open( self.project_control, "w" )
                 file.write( "project_pages" )
                 # Create Thumbnail
-                qimage = QImage( self.tn_size, self.tn_size, QImage.Format_RGBA8888 )
-                qimage.fill( self.tn_color )
+                qimage = QImage( self.thumbnail_size, self.thumbnail_size, QImage.Format_RGBA8888 )
+                qimage.fill( self.color_thumbnail )
                 qimage.save( self.project_thumbnail )
 
                 # Create File ZIP
@@ -1127,25 +1200,30 @@ class ProjectPages_Docker( DockWidget ):
                 self.layout.active_project.setText( project_displayname.replace( ".project_pages.zip", "" ) )
                 self.dialog.label_project_active.setText( project_displayname )
                 self.project_active = True
-                self.Files_List()
+                self.File_List()
+
+                # Thumbnails
+                self.Project_Thumbnail( self.project_recent )
+
+                # Widgets
+                self.layout.page_list.setEnabled( True )
+                self.layout.text_note.setEnabled( True )
 
                 # Control
                 self.Control_Save()
-
-                # Thumbnails
-                self.Project_Thumbnail( self.recent_project )
+                self.ZIP_Save()
             else:
                 self.File_Conflict( project_directory )
-        else:
-            pass
     def ZIP_Open( self, project_zip ):
         if self.project_active == False:
             # Variables
             basename = os.path.basename( project_zip )
-            name = basename.split( "." )[0] + "." + basename.split( "." )[1]
+            name = basename.replace( ".project_pages.zip", ".temp" )
             parent = os.path.dirname( project_zip )
+
             # Paths
-            project_directory = os.path.join( parent, name )
+            project_zip = os.path.abspath( project_zip )
+            project_directory = os.path.abspath( os.path.join( parent, name ) )
 
             # Filename is Open
             exists = os.path.exists( project_directory )
@@ -1156,7 +1234,6 @@ class ProjectPages_Docker( DockWidget ):
                     # Open Zip
                     archive = zipfile.ZipFile( project_zip, "r" )
                     name_list = archive.namelist()
-
                     # Structure Verification
                     check_structure = False
                     item = 0
@@ -1177,11 +1254,11 @@ class ProjectPages_Docker( DockWidget ):
                     self.project_active = True
                     self.project_zip = project_zip
                     self.project_directory = project_directory
-                    self.project_control = os.path.join( project_directory, "control.eo" )
-                    self.project_thumbnail = os.path.join( project_directory, "thumbnail.png" )
-                    self.project_images = os.path.join( project_directory, "IMAGES" )
-                    self.project_texts = os.path.join( project_directory, "TEXTS" )
-                    self.project_trash = os.path.join( project_directory, "TRASH" )
+                    self.project_control = os.path.abspath( os.path.join( project_directory, "control.eo" ) )
+                    self.project_thumbnail = os.path.abspath( os.path.join( project_directory, "thumbnail.png" ) )
+                    self.project_images = os.path.abspath( os.path.join( project_directory, "IMAGES" ) )
+                    self.project_texts = os.path.abspath( os.path.join( project_directory, "TEXTS" ) )
+                    self.project_trash = os.path.abspath( os.path.join( project_directory, "TRASH" ) )
 
                     # Display
                     self.layout.active_project.setText( basename.replace( ".project_pages.zip", "" ) )
@@ -1191,33 +1268,34 @@ class ProjectPages_Docker( DockWidget ):
                     shutil.unpack_archive( self.project_zip, self.project_directory )
 
                     # Update
-                    self.Files_List()
+                    self.File_List()
                     self.Index_Range( self.found_images, self.found_texts )
 
                     # Control
                     self.Control_Load()
 
                     # Thumbnails
-                    self.Project_Thumbnail( self.recent_project )
+                    self.Project_Thumbnail( self.project_recent )
+
+                    # Widgets
+                    self.layout.page_list.setEnabled( True )
+                    self.layout.text_note.setEnabled( True )
                 else:
                     self.Project_Recent_Minus( project_zip )
-                    self.Warn_Message( "Project Pages | ERROR Invalid File\nSuggestion : Import files into a new project" )
+                    self.Message_Warnning( "ERROR", "Invalid File\nSuggestion : Import files into a new project" )
             else:
                 self.File_Conflict( project_directory )
-        else:
-            pass
     def ZIP_Save( self ):
         if self.project_active == True:
-            shutil.make_archive( self.project_directory, 'zip', self.project_directory )
-            self.Files_List()
-            Krita.instance().activeWindow().activeView().showFloatingMessage( "Project Pages | Save Complete", Krita.instance().icon( "document-save" ), 5000, 0 )
-        else:
-            pass
+            destination = self.project_zip.replace( ".zip", "" ) # Zip is added with the archive format
+            shutil.make_archive( destination, 'zip', self.project_directory )
+            self.File_List()
+            self.Message_Float( "SAVE", "Complete", "document-save" )
     def ZIP_Close( self ):
         if self.project_active == True:
             # Ask user if Project Folder should be deleted
             string = "Delete Temporary Project Folder ?\n\nThis will not affect your project ZIP file\n"
-            boolean = QMessageBox.question( self,"Project Pages", string, QMessageBox.Yes,QMessageBox.No, )
+            boolean = QMessageBox.question( self, "Project Pages", string, QMessageBox.Yes, QMessageBox.No )
             if boolean == QMessageBox.Yes:
                 self.ZIP_Exit( self.project_directory )
 
@@ -1236,21 +1314,19 @@ class ProjectPages_Docker( DockWidget ):
             self.layout.page_list.clear()
             self.layout.text_note.clear()
             self.Index_Range( self.found_images, self.found_texts )
+            # Text Display
             self.layout.active_project.setText( "" )
             self.dialog.label_project_active.setText( "" )
-        else:
-            pass
+            # Enabled
+            self.layout.page_list.setEnabled( False )
+            self.layout.text_note.setEnabled( False )
     def ZIP_Exit( self, project_directory ):
         if ( self.project_active == True and os.path.isdir( project_directory ) == True ):
-            try:
-                shutil.rmtree( project_directory )
-            except:
-                pass
-        else:
-            pass
+            try:shutil.rmtree( project_directory )
+            except:pass
 
     #endregion
-    #region Pages ##################################################################
+    #region Pages
 
     def Page_New( self ):
         if self.project_active == True:
@@ -1268,8 +1344,8 @@ class ProjectPages_Docker( DockWidget ):
                 check_name = name + ".kra"
                 if check_name not in taken_names:
                     # Paths
-                    file_img = os.path.join( self.project_images, f"{ name }.kra" )
-                    file_txt = os.path.join( self.project_texts, f"{ name }.eo" )
+                    file_img = os.path.abspath( os.path.join( self.project_images, f"{ name }.kra" ) )
+                    file_txt = os.path.abspath( os.path.join( self.project_texts, f"{ name }.eo" ) )
 
                     # Texts
                     note = open( file_txt, "w" )
@@ -1277,7 +1353,7 @@ class ProjectPages_Docker( DockWidget ):
                     note.close()
 
                     # Image
-                    new_document = Krita.instance().createDocument( 
+                    new_document = Krita.instance().createDocument(
                         self.doc_width, self.doc_height,
                         self.doc_basename,
                         self.doc_colorspace, self.doc_bitdepth, "", self.doc_dpi
@@ -1312,10 +1388,9 @@ class ProjectPages_Docker( DockWidget ):
             file_dialog.setFileMode( QFileDialog.AnyFile )
             source = file_dialog.getOpenFileNames( self, "Select Files", "", filter_images )
             source = list( source[0] )
-            for i in range( 0, len( source ) ):
-                source_i = source[i]
-                if ( source_i != "" and source_i != "." and source_i not in self.found_images ):
-                    self.Page_Source( source_i )
+            for item in source:
+                if ( item != "" and item != "." and item not in self.found_images ):
+                    self.Page_Source( item )
         # Update
         self.Page_Update()
     def Page_Source( self, source ):
@@ -1325,7 +1400,7 @@ class ProjectPages_Docker( DockWidget ):
         shutil.copy( source, destination )
         # Create Text
         name = self.Path_Components( source )
-        file_txt = os.path.join( self.project_texts, f"{ name }.eo" )
+        file_txt = os.path.abspath( os.path.join( self.project_texts, f"{ name }.eo" ) )
         note = open( file_txt, "w" )
         note.write( "" )
         note.close()
@@ -1333,14 +1408,14 @@ class ProjectPages_Docker( DockWidget ):
         # Select Folder
         file_dialog = QFileDialog( QWidget( self ) )
         file_dialog.setFileMode( QFileDialog.DirectoryOnly )
-        path = file_dialog.getExistingDirectory( self, "Select Search Directory" )
-        if ( path != "" and path != "." ):
-            self.Files_Search( path, "PAGE" )
+        directory = file_dialog.getExistingDirectory( self, "Select Search Directory" )
+        if ( directory != "" and directory != "." ):
+            self.File_Search( directory, "PAGE" )
     def Page_Open( self ):
         if self.project_active == True:
             # Item
             basename = self.layout.page_list.currentItem().text()
-            path = os.path.join( self.project_images, basename )
+            path = os.path.abspath( os.path.join( self.project_images, basename ) )
 
             # Create Document
             document = Krita.instance().openDocument( path )
@@ -1377,13 +1452,13 @@ class ProjectPages_Docker( DockWidget ):
                         image_ext = splited[1]
                         num = str( i+1 ).zfill( 4 )
                         # Path OLD
-                        old_image  = os.path.join( self.project_images, item_i )
-                        old_backup = os.path.join( self.project_images, f"{ item_i }~" )
-                        old_text   = os.path.join( self.project_texts,  f"{ basename_i }.eo" )
+                        old_image  = os.path.abspath( os.path.join( self.project_images, item_i ) )
+                        old_backup = os.path.abspath( os.path.join( self.project_images, f"{ item_i }~" ) )
+                        old_text   = os.path.abspath( os.path.join( self.project_texts,  f"{ basename_i }.eo" ) )
                         # Path NEW
-                        new_image  = os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }" )
-                        new_backup = os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }~" )
-                        new_text   = os.path.join( self.project_texts,  f"{ new_name }_{ num }.eo" )
+                        new_image  = os.path.abspath( os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }" ) )
+                        new_backup = os.path.abspath( os.path.join( self.project_images, f"{ new_name }_{ num }.{ image_ext }~" ) )
+                        new_text   = os.path.abspath( os.path.join( self.project_texts,  f"{ new_name }_{ num }.eo" ) )
 
                         # Image File
                         try:
@@ -1407,7 +1482,7 @@ class ProjectPages_Docker( DockWidget ):
                         except:
                             pass
                 else:
-                    self.Canvas_Conflict()
+                    self.Page_Conflict()
 
         # Update
         self.Page_Update()
@@ -1424,6 +1499,11 @@ class ProjectPages_Docker( DockWidget ):
                 if closed == True:
                     # All Items
                     all_items = self.Items_All()
+                    limit = len( all_items )
+
+                    # Progress Bar
+                    self.layout.progress_bar.setMaximum( limit )
+                    self.layout.progress_bar.setValue( 0 )
 
                     # Start
                     row = self.layout.page_list.currentRow()
@@ -1431,58 +1511,71 @@ class ProjectPages_Docker( DockWidget ):
                     Krita.instance().setBatchmode( True )
 
                     # Export Document
+                    index = 0
                     for i in range( 0, len( all_items ) ):
+                        # Progress Bar
+                        self.layout.progress_bar.setValue( i + 1 )
+                        QApplication.processEvents()
+
                         # Paths
-                        name_i = all_items[i]
-                        extension = name_i.split( "." )[-1]
-                        basename_i = name_i.replace( "." + extension, "" )
+                        item = all_items[i]
+                        extension = item.split( "." )[-1]
+                        basename_i = item.replace( f".{ extension }", "" )
 
                         # Widget
                         self.layout.page_list.setCurrentRow( i )
-                        self.layout.text_note.setText( "Exporting : " + str( name_i ) )
+                        self.layout.text_note.setText( f"Exporting : { item }" )
 
                         # Path
-                        image_path = os.path.join( self.project_images, name_i )
-                        
-                        # Document
-                        document = Krita.instance().openDocument( image_path )
-                        width = document.width()
-                        height = document.height()
+                        image_path = os.path.abspath( os.path.join( self.project_images, item ) )
+
                         # Animation
                         if image_path.endswith( ".kra" ) == True:
-                            boolean, clip_start, clip_end, frames = self.Animation_Document( document )
-                            for anim in range( clip_start, clip_end+1 ):
+                            # Document
+                            document = Krita.instance().openDocument( image_path )
+                            width = document.width()
+                            height = document.height()
+                            boolean, clip_start, clip_end = self.Animation_Document( document )
+                            for anim in range( clip_start, clip_end + 1 ):
                                 document.setCurrentTime( anim )
                                 document.waitForDone()
                                 if boolean == False:
-                                    save_path = os.path.join( export_path, f"{ basename_i }.png" )
+                                    save_path = os.path.abspath( os.path.join( export_path, f"{ basename_i }.png" ) )
                                 else:
-                                    save_path = os.path.join( export_path, f"{ basename_i }_f{ str( anim ).zfill( 4 ) }.png" )
+                                    save_path = os.path.abspath( os.path.join( export_path, f"{ basename_i }_f{ str( anim ).zfill( 4 ) }.png" ) )
                                 qimage = document.thumbnail( width, height )
                                 qimage.save( save_path )
                                 document.waitForDone()
+                            document.close()
                         else:
-                            save_path = os.path.join( export_path, f"{ basename_i }.png" )
-                            qimage = document.thumbnail( width, height )
-                            qimage.save( save_path )
-                            document.waitForDone()
-                        document.close()
+                            save_path = os.path.abspath( os.path.join( export_path, f"{ basename_i }.png" ) )
+                            qpixmap = QPixmap( image_path )
+                            qpixmap.save( save_path )
+
+                        # Cycle
+                        index = self.Limit_Loop( index + 1, limit )
+
+                    # Progress Bar
+                    self.layout.progress_bar.setMaximum( limit )
+                    self.layout.progress_bar.setValue( 0 )
 
                     # End
                     self.layout.text_note.clear()
                     Krita.instance().setBatchmode( False )
                     self.Pages_Block( False )
+
+                    # Previous Select
                     self.layout.page_list.setCurrentRow( row )
                 else:
-                    self.Canvas_Conflict()
+                    self.Page_Conflict()
 
         # Update
         self.Page_Update()
-    def Page_Thumbnail( self, name ):
+    def Page_Project_Thumbnail( self, name ):
         if ( self.project_active == True and name != None ):
             # File
-            temp_ip = os.path.join( self.project_directory, "IMAGES" )
-            image_path = os.path.join( temp_ip, name )
+            temp_ip = os.path.abspath( os.path.join( self.project_directory, "IMAGES" ) )
+            image_path = os.path.abspath( os.path.join( temp_ip, name ) )
             qreader = QImageReader( image_path )
             if qreader.canRead() == True:
                 qimage = qreader.read()
@@ -1492,12 +1585,11 @@ class ProjectPages_Docker( DockWidget ):
             if ad != None:
                 file_name = os.path.basename( ad.fileName() )
                 if name == file_name:
-                    # QImage
-                    qimage = ad.thumbnail( ad.width(), ad.height() )
-                    # Selection
                     select = ad.selection()
                     if select != None:
-                        qimage = qimage.copy( QRect( select.x(), select.y(), select.width(), select.height() ) )
+                        qimage = ad.thumbnail( QRect( select.x(), select.y(), select.width(), select.height() ) )
+                    else:
+                        qimage = ad.thumbnail( ad.width(), ad.height() )
 
             if qimage.isNull() == False:
                 qimage = qimage.scaled( 500, 500, Qt.KeepAspectRatio, Qt.SmoothTransformation )
@@ -1505,15 +1597,15 @@ class ProjectPages_Docker( DockWidget ):
                 self.ZIP_Save()
 
         # Display Update
-        self.Project_Thumbnail( self.recent_project )
-    def Page_Delete( self, lista ):
+        self.Project_Thumbnail( self.project_recent )
+    def Page_Trash( self, lista ):
         # Variables
         count = len( lista )
         limit = 50
         if count == 1:
-            message = "Delete Page ?\n"
+            message = "Trash Page ?\n"
         elif count > 1:
-            message = "Delete Pages ?\n"
+            message = "Trash Pages ?\n"
         for i in range( 0, count ):
             if i <= limit:
                 message += str( lista[i] ) + "\n"
@@ -1533,50 +1625,81 @@ class ProjectPages_Docker( DockWidget ):
                 item_i = lista[i]
                 basename_i = ( item_i.split( "." ) )[0]
                 # Variables
-                path_image  = os.path.join( self.project_images, item_i )
-                path_backup = os.path.join( self.project_images, f"{ item_i }~" )
-                path_text   = os.path.join( self.project_texts,  f"{ basename_i }.eo" )
+                path_image  = os.path.abspath( os.path.join( self.project_images, item_i ) )
+                path_backup = os.path.abspath( os.path.join( self.project_images, f"{ item_i }~" ) )
+                path_text   = os.path.abspath( os.path.join( self.project_texts,  f"{ basename_i }.eo" ) )
 
                 # Image File
-                try:
-                    shutil.move( path_image, self.project_trash, copy_function = shutil.copytree )
-                except:
-                    pass
+                try:shutil.move( path_image, self.project_trash, copy_function = shutil.copytree )
+                except:pass
                 # Backup File
-                try:
-                    shutil.move( path_backup, self.project_trash, copy_function = shutil.copytree )
-                except:
-                    pass
+                try:shutil.move( path_backup, self.project_trash, copy_function = shutil.copytree )
+                except:pass
                 # Text File
-                try:
-                    shutil.move( path_text, self.project_trash, copy_function = shutil.copytree )
-                except:
-                    pass
+                try:shutil.move( path_text, self.project_trash, copy_function = shutil.copytree )
+                except:pass
 
         # Update
         self.Page_Update()
     def Page_Update( self ):
-        self.Files_List()
+        self.File_List()
         self.Index_Range( self.found_images, self.found_texts )
 
     def Pages_Block( self, boolean ):
         self.layout.page_list.blockSignals( boolean )
         self.layout.text_note.blockSignals( boolean )
     def Animation_Document( self, document ):
+        # Read
         animation = document.animationLength() # Problem all documents are created with 101 frames when created
+        clip_start = document.fullClipRangeStartTime()
+        clip_end = document.fullClipRangeEndTime()
+        # Calculation
         if animation == 1:
             boolean = False
         else:
             boolean = True
-        clip_start = document.fullClipRangeStartTime()
-        clip_end = document.fullClipRangeEndTime()
-        frames = abs( clip_end - clip_start )
-        return boolean, clip_start, clip_end, frames
+        # Return
+        return boolean, clip_start, clip_end
+
+    def Page_Conflict( self ):
+        self.Message_Warnning( "ERROR", "Edit conflict\nClose all active pages from canvas to run" )
+
+    def Page_Thumbnail( self ):
+        # Starting Empty
+        self.layout.page_list.clear()
+
+        # Images List Draw
+        if ( self.project_active == True and len( self.found_images ) > 0 ):
+            for i in range( 0, len( self.found_images ) ):
+                # Variables
+                path = self.found_images[i]
+                basename = os.path.basename( path )
+
+                # Create Items
+                item = QListWidgetItem( basename )
+                size = 100
+                # Thumbnail
+                bg = QPixmap( size, size )
+                bg.fill( self.color_alpha )
+                pix = QPixmap( path ).scaled( size, size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation )
+                # Variables
+                w = pix.width()
+                h = pix.height()
+                px = int( ( size * 0.5 ) - ( w * 0.5 ) )
+                py = int( ( size * 0.5 ) - ( h * 0.5 ) )
+                # Composed Image
+                painter = QPainter( bg )
+                painter.drawPixmap( px, py, pix )
+                painter.end()
+                # Item
+                qicon = QIcon( bg )
+                item.setIcon( qicon )
+                self.layout.page_list.addItem( item )
 
     #endregion
-    #region Files ##################################################################
+    #region Files
 
-    def Files_List( self ):
+    def File_List( self ):
         if self.project_active == True:
             # Directory Images
             self.dir_image = QDir( self.project_images )
@@ -1618,7 +1741,7 @@ class ProjectPages_Docker( DockWidget ):
                 if boolean == False:
                     basename = str( os.path.basename( trash_i ) )
                     trash_tag = "[ Trash_{number} ] ".format( number=str( i ).zfill( 4 ) )
-                    new_name = os.path.join( self.project_trash, trash_tag + basename )
+                    new_name = os.path.abspath( os.path.join( self.project_trash, trash_tag + basename ) )
                     qfile.rename( trash_i, new_name )
                 else:
                     new_name = trash_i
@@ -1628,55 +1751,18 @@ class ProjectPages_Docker( DockWidget ):
             self.layout.text_note.clear()
 
         # Update
-        self.Thumbnail_Redraw()
-    def Thumbnail_Redraw( self ):
-        # Starting Empty
-        self.layout.page_list.clear()
-
-        # Images List Draw
-        if ( self.project_active == True and len( self.found_images ) > 0 ):
-            for i in range( 0, len( self.found_images ) ):
-                # Variables
-                path = self.found_images[i]
-                basename = os.path.basename( path )
-
-                # Create Items
-                item = QListWidgetItem( basename )
-                size = 100
-                # Thumbnail
-                bg = QPixmap( size, size )
-                bg.fill( self.color_alpha )
-                pix = QPixmap( path ).scaled( size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation )
-                # Variables
-                w = pix.width()
-                h = pix.height()
-                px = int( ( size*0.5 ) - ( w*0.5 ) )
-                py = int( ( size*0.5 ) - ( h*0.5 ) )
-                # Composed Image
-                painter = QPainter( bg )
-                painter.drawPixmap( px, py, pix )
-                painter.end()
-                # Item
-                qicon = QIcon( bg )
-                item.setIcon( qicon )
-                self.layout.page_list.addItem( item )
-
-    def Canvas_Conflict( self ):
-        self.Warn_Message( "Project Pages | ERROR Edit conflict\nClose all active pages from canvas to run" )
+        self.Page_Thumbnail()
     def File_Conflict( self, path ):
-        self.Warn_Message( "Project Pages | ERROR Namespace conflict\nFolder with same name already exists" )
+        self.Message_Warnning( "ERROR", "Namespace conflict\nFolder with same name already exists" )
         self.File_Location( path, "SELECT" ) # Shows the File that is causing conflict
     def File_Location( self, project_directory, mode ):
-        # Variables
-        if mode == "OPEN":
-            operation = "/open,"
-        if mode == "SELECT":
-            operation = "/select,"
-
-        # Kernel
         kernel = str( QSysInfo.kernelType() ) # WINDOWS=winnt & LINUX=linux
         if kernel == "winnt": # Windows
-            FILEBROWSER_PATH = os.path.join( os.getenv( 'WINDIR' ), 'explorer.exe' )
+            if mode == "OPEN":
+                operation = "/open,"
+            if mode == "SELECT":
+                operation = "/select,"
+            FILEBROWSER_PATH = os.path.abspath( os.path.join( os.getenv( 'WINDIR' ), 'explorer.exe' ) )
             subprocess.run( [ FILEBROWSER_PATH, operation, project_directory ] )
         elif kernel == "linux": # Linux
             QDesktopServices.openUrl( QUrl.fromLocalFile( os.path.dirname( project_directory ) ) )
@@ -1684,11 +1770,14 @@ class ProjectPages_Docker( DockWidget ):
             QDesktopServices.openUrl( QUrl.fromLocalFile( os.path.dirname( project_directory ) ) )
         else:
             QDesktopServices.openUrl( QUrl.fromLocalFile( os.path.dirname( project_directory ) ) )
+    def File_Search( self, path, mode ):
+        # Variables
+        limit = 5
 
-    def Files_Search( self, path, mode ):
         # UI
-        self.Warn_Message( "Project Pages | SEARCH Start")
-        self.layout.progress_bar.setMaximum( 100 )
+        self.Message_Warnning( "SEARCH", "Start" )
+        # Progress Bar
+        self.layout.progress_bar.setMaximum( limit )
         self.layout.progress_bar.setValue( 0 )
 
         # Items
@@ -1705,33 +1794,34 @@ class ProjectPages_Docker( DockWidget ):
         while files.hasNext():
             # Progress Bar
             self.layout.progress_bar.setValue( index )
-            item = files.next()
+            QApplication.processEvents()
+            # Search
+            item = os.path.abspath( files.next() )
             if mode == "PROJECT":
-                if item not in self.recent_project:
+                if item not in self.project_recent:
                     self.Project_Recent_Add( item )
             elif mode == "PAGE":
                 if item not in self.found_images:
                     self.Page_Source( item )
-            try:QtCore.qDebug( f"Project Pages | IMPORT {item}" )
-            except:pass
+            self.Message_Log( "IMPORT", f"file { item }" )
             # Cycle
-            index = self.Limit_Loop( index + 1, 100 )
+            index = self.Limit_Loop( index + 1, limit )
 
         # Update
         if mode == "PROJECT":
-            self.Project_Thumbnail( self.recent_project )
-            Krita.instance().writeSetting( "Project Pages", "recent_project", str( self.recent_project ) )
+            self.Project_Thumbnail( self.project_recent )
+            Krita.instance().writeSetting( "Project Pages", "project_recent", str( self.project_recent ) )
         elif mode == "PAGE":
             self.Page_Update()
-            self.Thumbnail_Redraw()
-        self.Warn_Message( "Project Pages | SEARCH Finish")
+            self.Page_Thumbnail()
+        self.Message_Warnning( "SEARCH", "Finish" )
 
-        # UI Reset
-        self.layout.progress_bar.setMaximum( 100 )
+        # Progress Bar
+        self.layout.progress_bar.setMaximum( limit )
         self.layout.progress_bar.setValue( 0 )
 
    #endregion
-    #region Information ############################################################
+    #region Information
 
     def Information_Block_Signals( self, boolean ):
         # Signals
@@ -1812,7 +1902,7 @@ class ProjectPages_Docker( DockWidget ):
                 t_editing_cycles = self.time_to_string( self.cycles_to_time( self.info["editing-cycles"] ) )
                 t_editing_time = self.time_to_string( self.cycles_to_time( self.info["editing-time"] ) )
                 if d_creation_date != "":
-                    delta_creation = self.time_delta( 
+                    delta_creation = self.time_delta(
                         int( d_creation_date[0:4] ),
                         int( d_creation_date[5:7] ),
                         int( d_creation_date[8:10] ),
@@ -1955,7 +2045,7 @@ class ProjectPages_Docker( DockWidget ):
                 cycles -= sec_minuto
             second = int( cycles )
         # Return
-        time = [year, month, day, hour, minute, second]
+        time = [ year, month, day, hour, minute, second ]
         return time
     def time_to_string( self, time ):
         # Variables
@@ -2060,16 +2150,16 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.menu_money_total.blockSignals( boolean )
 
     #endregion
-    #region Layers #################################################################
+    #region Layers
 
     def Layer_Space( self, boolean ):
-        self.check_space = boolean
+        self.layer_space = boolean
     def Layer_Replace( self, boolean ):
-        self.check_replace = boolean
+        self.layer_replace = boolean
     def Layer_Prefix( self, boolean ):
-        self.check_prefix = boolean
+        self.layer_prefix = boolean
     def Layer_Suffix( self, boolean ):
-        self.check_suffix = boolean
+        self.layer_suffix = boolean
 
     def Rename_LOAD( self, dictionary ):
         # Widgets
@@ -2095,7 +2185,7 @@ class ProjectPages_Docker( DockWidget ):
         suffix_folder = self.dialog.suffix_folder.text()
         suffix_layer = self.dialog.suffix_layer.text()
         # Variable
-        self.rename_strings = {
+        self.layer_string = {
             "space" : space,
             "replace_old" : replace_old,
             "replace_new" : replace_new,
@@ -2105,7 +2195,7 @@ class ProjectPages_Docker( DockWidget ):
             "suffix_layer" : suffix_layer,
             }
         # Save
-        Krita.instance().writeSetting( "Project Pages", "rename_strings", str( self.rename_strings ) )
+        Krita.instance().writeSetting( "Project Pages", "layer_string", str( self.layer_string ) )
 
     def Layer_Select( self, index ):
         if ( self.canvas() is not None ) and ( self.canvas().view() is not None ):
@@ -2117,7 +2207,7 @@ class ProjectPages_Docker( DockWidget ):
                 if node_i != None: # Avoids instant Krita Crash
                     ad.setActiveNode( node_i )
                 else:
-                    self.Warn_Message( "Project Pages | Solved namespace conflict\n" )
+                    self.Message_Warnning( "LAYER", "Solved namespace conflict\n" )
                     self.Layer_Rename()
     def Layer_Rename( self ):
         self.dialog.rename_report.clear()
@@ -2161,20 +2251,20 @@ class ProjectPages_Docker( DockWidget ):
             new_name = name_i
             # Modifications to String
             if name_i not in repetition:
-                if self.check_space == True:
-                    new_name = new_name.replace( " ", self.rename_strings["space"] )
-                if self.check_replace == True:
-                    new_name = new_name.replace( self.rename_strings["replace_old"], self.rename_strings["replace_new"] )
-                if self.check_prefix == True:
-                    if ( type_i == "grouplayer" and name_i.startswith( self.rename_strings["prefix_folder"] ) == False ):
-                        new_name = self.rename_strings["prefix_folder"] + new_name
-                    if ( type_i == "paintlayer" and name_i.startswith( self.rename_strings["prefix_layer"] ) == False ):
-                        new_name = self.rename_strings["prefix_layer"] + new_name
-                if self.check_suffix == True:
-                    if ( type_i == "grouplayer" and name_i.endswith( self.rename_strings["suffix_folder"] ) == False ):
-                        new_name = new_name + self.rename_strings["suffix_folder"]
-                    if ( type_i == "paintlayer" and name_i.endswith( self.rename_strings["suffix_layer"] ) == False ):
-                        new_name = new_name + self.rename_strings["suffix_layer"]
+                if self.layer_space == True:
+                    new_name = new_name.replace( " ", self.layer_string["space"] )
+                if self.layer_replace == True:
+                    new_name = new_name.replace( self.layer_string["replace_old"], self.layer_string["replace_new"] )
+                if self.layer_prefix == True:
+                    if ( type_i == "grouplayer" and name_i.startswith( self.layer_string["prefix_folder"] ) == False ):
+                        new_name = self.layer_string["prefix_folder"] + new_name
+                    if ( type_i == "paintlayer" and name_i.startswith( self.layer_string["prefix_layer"] ) == False ):
+                        new_name = self.layer_string["prefix_layer"] + new_name
+                if self.layer_suffix == True:
+                    if ( type_i == "grouplayer" and name_i.endswith( self.layer_string["suffix_folder"] ) == False ):
+                        new_name = new_name + self.layer_string["suffix_folder"]
+                    if ( type_i == "paintlayer" and name_i.endswith( self.layer_string["suffix_layer"] ) == False ):
+                        new_name = new_name + self.layer_string["suffix_layer"]
 
                 # Rename Node
                 if name_i != new_name:
@@ -2189,7 +2279,7 @@ class ProjectPages_Docker( DockWidget ):
         self.dialog.suffix_layer.blockSignals( boolean )
 
     #endregion
-    #region Guides #################################################################
+    #region Guides
 
     def Guide_Horizontal_Mirror( self, boolean ):
         self.guide_horizontal_mirror = boolean
@@ -2454,11 +2544,11 @@ class ProjectPages_Docker( DockWidget ):
             self.dialog.guide_lock.setChecked( False )
 
     #endregion
-    #region Mirror Fix #############################################################
+    #region Mirror Fix
 
     def MirrorFix_Side( self, SIGNAL_SIDE ):
         if ( ( self.canvas() is not None ) and ( self.canvas().view() is not None ) ):
-            boolean = QMessageBox.question( self,"Project Pages", "Mirror Fix Layer ?\nSource = "+str( SIGNAL_SIDE ), QMessageBox.Yes,QMessageBox.No, )
+            boolean = QMessageBox.question( self, "Project Pages", f"Mirror Fix Layer ?\nSource = { SIGNAL_SIDE }", QMessageBox.Yes, QMessageBox.No )
             if ( boolean == QMessageBox.Yes and SIGNAL_SIDE != None ):
                 self.MirrorFix_Run( SIGNAL_SIDE )
     def MirrorFix_Run( self, side ):
@@ -2472,8 +2562,8 @@ class ProjectPages_Docker( DockWidget ):
             name = "Mirror Fix : " + node.name()
             width = int( ad.width() )
             height = int( ad.height() )
-            w2 = width * 0.5
-            h2 = height * 0.5
+            w2 = int( width * 0.5 )
+            h2 = int( height * 0.5 )
 
             # Force the Mirror Axis to Center
             if ( side == "LEFT" or side == "RIGHT" ):
@@ -2493,23 +2583,23 @@ class ProjectPages_Docker( DockWidget ):
                 if side == "LEFT":
                     px = 0
                     py = 0
-                    pw = w2
+                    pw = w2 + 1
                     ph = height
                 if side == "RIGHT":
                     px = w2
                     py = 0
-                    pw = w2+1
+                    pw = w2 + 1
                     ph = height
                 if side == "TOP":
                     px = 0
                     py = 0
                     pw = width
-                    ph = h2
+                    ph = h2 + 1
                 if side == "DOWN":
                     px = 0
                     py = h2
                     pw = width
-                    ph = h2+1
+                    ph = h2 + 1
                 # Selection
                 sel = Selection()
                 sel.select( int( px ), int( py ), int( pw ), int( ph ), 255 )
@@ -2527,6 +2617,7 @@ class ProjectPages_Docker( DockWidget ):
             # New Node
             new_node = ad.createNode( name, "paintLayer" )
             ad.activeNode().parentNode().addChildNode( new_node, node )
+            self.Wait( ad )
             ad.setActiveNode( new_node )
             self.Wait( ad )
 
@@ -2534,33 +2625,30 @@ class ProjectPages_Docker( DockWidget ):
             new_node.setPixelData( byte_array, int( px ), int( py ), int( pw ), int( ph ) )
             self.Wait( ad )
 
-            # Wait for everything in event queue.
-            def do_later():
-                # Delete Excess
-                Krita.instance().action( 'invert_selection' ).trigger()
-                self.Wait( ad )
-                Krita.instance().action( 'clear' ).trigger()
-                self.Wait( ad )
-                Krita.instance().action( 'deselect' ).trigger()
-                self.Wait( ad )
+            # Delete Excess
+            Krita.instance().action( 'invert_selection' ).trigger()
+            self.Wait( ad )
+            Krita.instance().action( 'clear' ).trigger()
+            self.Wait( ad )
+            Krita.instance().action( 'deselect' ).trigger()
+            self.Wait( ad )
 
-                # Mirror Node
-                if ( side == "LEFT" or side == "RIGHT" ):
-                    ki.action( 'mirrorNodeX' ).trigger()
-                if ( side == "TOP" or side == "DOWN" ):
-                    ki.action( 'mirrorNodeY' ).trigger()
-                self.Wait( ad )
+            # Mirror Node
+            if ( side == "LEFT" or side == "RIGHT" ):
+                ki.action( 'mirrorNodeX' ).trigger()
+            if ( side == "TOP" or side == "DOWN" ):
+                ki.action( 'mirrorNodeY' ).trigger()
+            self.Wait( ad )
 
-                # Merge ( this solves a alpha compositing issue )
-                merge_node = new_node.mergeDown()
-                self.Wait( ad )
-            QTimer.singleShot( 0, do_later )
+            # Merge ( this solves a alpha compositing issue )
+            merge_node = new_node.mergeDown()
+            self.Wait( ad )
     def Wait( self, active_document ):
         active_document.waitForDone()
         active_document.refreshProjection()
 
     #endregion
-    #region Control ################################################################
+    #region Control
 
     def Control_Load( self ):
         if self.project_active == True:
@@ -2569,16 +2657,17 @@ class ProjectPages_Docker( DockWidget ):
                 data = control.readlines()
 
                 # Parsing
-                plugin = str( data[0] ).replace( "\n", "", 1 )
-                if plugin == "project_pages":
+                if data[0].startswith( "project_pages" ) == True:
                     # Widgets
                     self.Dialog_Block( True )
 
                     # Cycle
                     for i in range( 0, len( data ) ):
                         # Variables
-                        data_i = data[i].replace( "\n", "", 1 )
-                        item = data_i.split( "=" )
+                        line = data[i]
+                        if line.endswith( "\n" ) == True:
+                            line = line[:-1]
+                        item = line.split( "=" )
 
                         # Document
                         if item[0] == "doc_basename":
@@ -2587,42 +2676,36 @@ class ProjectPages_Docker( DockWidget ):
                                 self.dialog.doc_basename.setText( self.doc_basename )
                             except:
                                 self.dialog.doc_basename.setText( "page" )
-
                         if item[0] == "doc_width":
                             try:
                                 self.doc_width = eval( item[1] )
                                 self.dialog.doc_width.setValue( self.doc_width )
                             except:
                                 self.dialog.doc_width.setValue( 2480 )
-
                         if item[0] == "doc_height":
                             try:
                                 self.doc_height = eval( item[1] )
                                 self.dialog.doc_height.setValue( self.doc_height )
                             except:
                                 self.dialog.doc_height.setValue( 3508 )
-
                         if item[0] == "doc_swap":
                             try:
                                 self.doc_swap = eval( item[1] )
                                 self.dialog.doc_swap.setChecked( self.doc_swap )
                             except:
                                 self.dialog.doc_swap.setChecked( False )
-
                         if item[0] == "doc_colorspace":
                             try:
                                 self.doc_colorspace = str( item[1] )
                                 self.dialog.doc_colorspace.setCurrentText( self.doc_colorspace )
                             except:
                                 self.dialog.doc_colorspace.setCurrentText( "RGBA" )
-
                         if item[0] == "doc_bitdepth":
                             try:
                                 self.doc_bitdepth = str( item[1] )
                                 self.dialog.doc_bitdepth.setCurrentText( self.doc_bitdepth )
                             except:
                                 self.dialog.doc_bitdepth.setCurrentText( "U8" )
-
                         if item[0] == "doc_dpi":
                             try:
                                 self.doc_dpi = eval( item[1] )
@@ -2637,7 +2720,6 @@ class ProjectPages_Docker( DockWidget ):
                                 self.dialog.doc_gh.setText( str( self.doc_gh ).replace( "[", "" ).replace( "]", "" ) ) # Variable is list Text is not
                             except:
                                 self.dialog.doc_gh.setText( "" )
-
                         if item[0] == "doc_gv":
                             try:
                                 self.doc_gv = eval( item[1] )
@@ -2651,21 +2733,20 @@ class ProjectPages_Docker( DockWidget ):
     def Control_Save( self ):
         if ( self.project_active == True and self.project_control != None ):
             # Data to be Saved
-            data = ( 
+            data = (
                 # Plugin
                 "project_pages\n"+
                 # Document Template
-                "doc_basename=" + str( self.doc_basename ) + "\n" +
-                "doc_width=" + str( self.doc_width ) + "\n" +
-                "doc_height=" + str( self.doc_height ) + "\n" +
-                "doc_swap=" + str( self.doc_swap ) + "\n" +
-                "doc_colorspace=" + str( self.doc_colorspace ) + "\n" +
-                "doc_bitdepth=" + str( self.doc_bitdepth ) + "\n" +
-                "doc_dpi=" + str( self.doc_dpi ) + "\n" +
+                f"doc_basename={ self.doc_basename }\n" +
+                f"doc_width={ self.doc_width }\n" +
+                f"doc_height={ self.doc_height }\n" +
+                f"doc_swap={ self.doc_swap }\n" +
+                f"doc_colorspace={ self.doc_colorspace }\n" +
+                f"doc_bitdepth={ self.doc_bitdepth }\n" +
+                f"doc_dpi={ self.doc_dpi }\n" +
                 # Guides Template
-                "doc_gh=" + str( self.doc_gh ) + "\n" +
-                "doc_gv=" + str( self.doc_gv ) + "\n" +
-                ""
+                f"doc_gh={ self.doc_gh }\n" +
+                f"doc_gv={ self.doc_gv }\n"
                 )
 
             # Save to EO file
@@ -2673,16 +2754,17 @@ class ProjectPages_Docker( DockWidget ):
                 control.write( data )
 
     #endregion
-    #region Notifier ###############################################################
+    #region Notifier
 
+    # Notifier
     def Application_Closing( self ):
         pass
     def Configuration_Changed( self ):
         pass
     def Image_Closed( self ):
-        self.Thumbnail_Redraw()
+        self.Page_Thumbnail()
     def Image_Created( self ):
-        self.Thumbnail_Redraw()
+        self.Page_Thumbnail()
     def Image_Saved( self ):
         # Zip File
         check = self.Check_Active()
@@ -2690,27 +2772,24 @@ class ProjectPages_Docker( DockWidget ):
             self.Control_Save()
             self.ZIP_Save()
         # Display
-        self.Thumbnail_Redraw()
+        self.Page_Thumbnail()
     def View_Closed( self ):
-        self.Thumbnail_Redraw()
+        self.Page_Thumbnail()
     def View_Created( self ):
-        self.Thumbnail_Redraw()
+        self.Page_Thumbnail()
     def Window_Created( self ):
-        pass
+        # Module
+        self.window = Krita.instance().activeWindow()
+        # Signals
+        self.window.activeViewChanged.connect( self.View_Changed )
+        self.window.themeChanged.connect( self.Theme_Changed )
+        self.window.windowClosed.connect( self.Window_Closed )
+        # Start Position
+        self.Theme_Changed()
     def Window_IsBeingCreated( self ):
         pass
 
-    #endregion
-    #region Window #################################################################
-
-    def Window_Connect( self ):
-        # Window
-        self.window = Krita.instance().activeWindow()
-        if self.window != None:
-            self.window.activeViewChanged.connect( self.View_Changed )
-            self.window.themeChanged.connect( self.Theme_Changed )
-            self.window.windowClosed.connect( self.Window_Closed )
-
+    # Window
     def View_Changed( self ):
         pass
     def Theme_Changed( self ):
@@ -2725,12 +2804,12 @@ class ProjectPages_Docker( DockWidget ):
         self.ZIP_Exit( self.project_directory )
 
     #endregion
-    #region Widget Events ##########################################################
+    #region Widget Events
 
     def showEvent( self, event ):
-        # Window
-        self.Window_Connect()
-        self.Theme_Changed()
+        # Dockers
+        self.Welcome_Dockers()
+
         # QTimer
         if check_timer >= 30:
             self.timer_pulse.start( check_timer )
@@ -2764,16 +2843,13 @@ class ProjectPages_Docker( DockWidget ):
 
         return super().eventFilter( source, event )
 
-    #endregion
-    #region Change Canvas ##########################################################
-
     def canvasChanged( self, canvas ):
         self.dialog.rename_report.clear()
         self.Krita_to_ProjectPages()
         self.Menu_Tabs()
 
     #endregion
-    #region Notes ##################################################################
+    #region Notes
 
     """
     # Label Message
@@ -2783,19 +2859,29 @@ class ProjectPages_Docker( DockWidget ):
     QMessageBox.information( QWidget(), i18n( "Warnning" ), i18n( "message" ) )
 
     # Log Viewer Message
-    QtCore.qDebug( "value = " + str( value ) )
+    QtCore.qDebug( f"value = { value }" )
     QtCore.qDebug( "message" )
     QtCore.qWarning( "message" )
     QtCore.qCritical( "message" )
+
+    QTimer.singleShot( 0, lambda: self.MirrorFix_Invert( ki, ad, side, new_node ) )
+
+    qmainwindow = Krita.instance().activeWindow().qwindow()
+    if qmainwindow != None:
+        stacked_widget = qmainwindow.centralWidget()
+        count = stacked_widget.count()
+        index = stacked_widget.currentIndex()
+        var = index - 1
+        if var <= 0 : var = 0
+        if var >= count : var = count
+        stacked_widget.setCurrentIndex( var )
+
     """
 
     #endregion
 
-
 """
-Krita Bug:
-- Select Node by name for a layer that does not exist causes instant crash ( set Active Node )
+Fix :
+- Mirror Fix does not work with active selections
 
-To Do:
-- Add Text settings ( font type, font size, font color )
 """

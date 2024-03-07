@@ -15,29 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#region Imports ####################################################################
-
 # Krita
 from krita import *
 # PyQt5
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 
-#endregion
-
-
-#region Modules ####################################################################
 
 class MirrorFix_Button( QWidget ):
     SIGNAL_SIDE = QtCore.pyqtSignal( str )
-    
+
+    # Initilization
     def __init__( self, parent ):
         super( MirrorFix_Button, self ).__init__( parent )
         # Variables
         self.origin_x = 0
         self.origin_y = 0
         self.side = None
-    def sizeHint( self ):
-        return QtCore.QSize( 5000,5000 )
 
     # Mouse Events
     def mousePressEvent( self, event ):
@@ -62,7 +55,7 @@ class MirrorFix_Button( QWidget ):
         self.origin_x = 0
         self.origin_y = 0
         self.side = None
-
+    # Mouse Operation
     def Cursor_Side( self, event ):
         # Read
         ex = event.x()
@@ -87,5 +80,3 @@ class MirrorFix_Button( QWidget ):
                     self.side = "TOP"
     def Cursor_Signal( self, side ):
         self.SIGNAL_SIDE.emit( side )
-
-#endregion

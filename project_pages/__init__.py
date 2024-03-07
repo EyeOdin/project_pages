@@ -31,4 +31,4 @@ __url__ = ' https://github.com/EyeOdin '
 DOCKER_ID = "pykrita_project_pages_docker"
 
 # Register Krita Docker
-Application.addDockWidgetFactory( DockWidgetFactory(DOCKER_ID, DockWidgetFactoryBase.DockRight, ProjectPages_Docker) )
+Application.addDockWidgetFactory( DockWidgetFactory( DOCKER_ID, DockWidgetFactoryBase.DockRight, ProjectPages_Docker ) )
