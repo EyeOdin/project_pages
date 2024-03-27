@@ -2579,27 +2579,37 @@ class ProjectPages_Docker( DockWidget ):
             # Selection
             ss = ad.selection()
             if ss == None: # Square
+                # Correction
+                if side in ( "LEFT", "RIGHT" ):
+                    r = width % 2
+                    if r == 0:m = 0
+                    else:m = 1
+                if side in ( "TOP", "DOWN" ):
+                    r = height % 2
+                    if r == 0:m = 0
+                    else:m = 1
+
                 # Variables
                 if side == "LEFT":
                     px = 0
                     py = 0
-                    pw = w2 + 1
+                    pw = w2 + m
                     ph = height
                 if side == "RIGHT":
                     px = w2
                     py = 0
-                    pw = w2 + 1
+                    pw = w2 + m
                     ph = height
                 if side == "TOP":
                     px = 0
                     py = 0
                     pw = width
-                    ph = h2 + 1
+                    ph = h2 + m
                 if side == "DOWN":
                     px = 0
                     py = h2
                     pw = width
-                    ph = h2 + 1
+                    ph = h2 + m
                 # Selection
                 sel = Selection()
                 sel.select( int( px ), int( py ), int( pw ), int( ph ), 255 )
