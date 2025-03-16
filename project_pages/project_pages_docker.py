@@ -33,16 +33,13 @@ from krita import *
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 # Project Pages Modules
 from .project_pages_extension import ProjectPages_Extension
-from .project_pages_modulo import (
-    MirrorFix_Button,
-    )
 
 #endregion
 #region Global Variables
 
 # Plugin
 DOCKER_NAME = "Project Pages"
-project_pages_version = "2024_03_02"
+project_pages_version = "2025_03_16"
 
 # Project
 file_extension = "zip"
@@ -222,6 +219,12 @@ class ProjectPages_Docker( DockWidget ):
         # System
         self.sow_project = False
         self.sow_dockers = False
+
+        # Export
+        self.export_width_state = False
+        self.export_height_state = False
+        self.export_width_value = 1000
+        self.export_height_value = 1000
     def Connections( self ):
         # Panels
         self.layout.project_list.doubleClicked.connect( self.Project_Open )
@@ -229,6 +232,7 @@ class ProjectPages_Docker( DockWidget ):
         self.layout.page_list.doubleClicked.connect( self.Page_Open )
         self.layout.text_note.textChanged.connect( self.Text_Save )
         # UI
+        self.layout.export_selection.clicked.connect( self.Export_Selection )
         self.layout.page_index.valueChanged.connect( self.Index_Number )
         self.layout.settings.clicked.connect( self.Menu_Settings )
 
@@ -286,6 +290,11 @@ class ProjectPages_Docker( DockWidget ):
         # Dialog System
         self.dialog.sow_project.toggled.connect( self.ShowOnWelcome_Project )
         self.dialog.sow_dockers.toggled.connect( self.ShowOnWelcome_Dockers )
+        # Export
+        self.dialog.export_width_state.toggled.connect( self.Export_Width_State )
+        self.dialog.export_width_value.valueChanged.connect( self.Export_Width_Value )
+        self.dialog.export_height_state.toggled.connect( self.Export_Height_State )
+        self.dialog.export_height_value.valueChanged.connect( self.Export_Height_Value )
         # Notices
         self.dialog.manual.clicked.connect( self.Menu_Manual )
         self.dialog.license.clicked.connect( self.Menu_License )
@@ -295,8 +304,6 @@ class ProjectPages_Docker( DockWidget ):
         self.layout.page_list.installEventFilter( self )
         self.layout.mode.installEventFilter( self )
     def Modules( self ):
-        #region Notifier
-
         self.notifier = Krita.instance().notifier()
         self.notifier.applicationClosing.connect( self.Application_Closing )
         self.notifier.configurationChanged.connect( self.Configuration_Changed )
@@ -307,29 +314,20 @@ class ProjectPages_Docker( DockWidget ):
         self.notifier.viewCreated.connect( self.View_Created )
         self.notifier.windowCreated.connect( self.Window_Created )
         self.notifier.windowIsBeingCreated.connect( self.Window_IsBeingCreated )
-
-        #endregion
-        #region UI
-
-        self.mirror_fix = MirrorFix_Button( self.layout.mirror_fix )
-        self.mirror_fix.SIGNAL_SIDE.connect( self.MirrorFix_Side )
-
-        #endregion
     def Style( self ):
         # QIcons
         self.qicon_project = Krita.instance().icon( 'bundle_archive' )
         self.qicon_page = Krita.instance().icon( 'zoom-print' )
-        self.qicon_mirror = Krita.instance().icon( 'transform_icons_liquify_move' )
+        self.qicon_export = Krita.instance().icon( 'document-export' )
         qicon_settings = Krita.instance().icon( 'settings-button' )
 
         # Widget
         self.layout.mode.setIcon( self.qicon_project )
-        self.layout.mirror_fix.setIcon( self.qicon_mirror )
+        self.layout.export_selection.setIcon( self.qicon_export )
         self.layout.settings.setIcon( qicon_settings )
 
         # ToolTips
         self.layout.mode.setToolTip( "ZIP" )
-        self.layout.mirror_fix.setToolTip( "Mirror Fix" )
         self.layout.active_project.setToolTip( "Active Project" )
         self.layout.page_index.setToolTip( "Page Index" )
         self.layout.settings.setToolTip( "Settings" )
@@ -355,8 +353,6 @@ class ProjectPages_Docker( DockWidget ):
         # Install Extension for Docker
         extension = ProjectPages_Extension( parent = Krita.instance() )
         Krita.instance().addExtension( extension )
-        # Connect Extension Signals
-        extension.SIGNAL_MIRROR_FIX.connect( self.MirrorFix_Run )
     def Settings( self ):
         # Directory Path
         project_recent = self.Set_Read( "EVAL", "project_recent", self.project_recent )
@@ -375,6 +371,12 @@ class ProjectPages_Docker( DockWidget ):
         # Show on Welcome
         self.sow_project = self.Set_Read( "EVAL", "sow_project", self.sow_project )
         self.sow_dockers = self.Set_Read( "EVAL", "sow_dockers", self.sow_dockers )
+
+        # Export
+        self.export_width_state = self.Set_Read( "EVAL", "export_width_state", self.export_width_state )
+        self.export_height_state = self.Set_Read( "EVAL", "export_height_state", self.export_height_state )
+        self.export_width_value = self.Set_Read( "INT", "export_width_value", self.export_width_value )
+        self.export_height_value = self.Set_Read( "INT", "export_height_value", self.export_height_value )
     def Plugin_Load( self ):
         try:
             self.Loader()
@@ -396,6 +398,14 @@ class ProjectPages_Docker( DockWidget ):
         # Show on Welcome
         self.dialog.sow_project.setChecked( self.sow_project )
         self.dialog.sow_dockers.setChecked( self.sow_dockers )
+
+        # Export
+        self.Export_Load_Block( True )
+        self.dialog.export_width_state.setChecked( self.export_width_state )
+        self.dialog.export_height_state.setChecked( self.export_height_state )
+        self.dialog.export_width_value.setValue( self.export_width_value )
+        self.dialog.export_height_value.setValue( self.export_height_value )
+        self.Export_Load_Block( False )
     def Set_Read( self, mode, entry, default ):
         setting = Krita.instance().readSetting( "Project Pages", entry, "" )
         if setting == "":
@@ -2544,118 +2554,96 @@ class ProjectPages_Docker( DockWidget ):
             self.dialog.guide_lock.setChecked( False )
 
     #endregion
-    #region Mirror Fix
+    #region Export Selection
 
-    def MirrorFix_Side( self, SIGNAL_SIDE ):
+    def Export_Load_Block( self, boolean ):
+        self.dialog.export_width_state.blockSignals( boolean )
+        self.dialog.export_height_state.blockSignals( boolean )
+    def Export_Width_Block( self ):
+        # Variables
+        self.export_width_state = False
+        self.export_height_state = False
+        # User Insterface
+        self.dialog.export_width_state.blockSignals( True )
+        self.dialog.export_width_state.setChecked( False)
+        self.dialog.export_width_state.blockSignals( False )
+    def Export_Height_Block( self ):
+        # Variables
+        self.export_width_state = False
+        self.export_height_state = False
+        # User Interface
+        self.dialog.export_height_state.blockSignals( True )
+        self.dialog.export_height_state.setChecked( False)
+        self.dialog.export_height_state.blockSignals( False )
+
+    def Export_Width_State( self, state ):
+        # Variables
+        self.Export_Height_Block()
+        self.export_width_state = state
+        # Save
+        Krita.instance().writeSetting( "Project Pages", "export_width_state", str( self.export_width_state ) )
+        Krita.instance().writeSetting( "Project Pages", "export_height_state", str( self.export_height_state ) )
+    def Export_Height_State( self, state ):
+        # Variables
+        self.Export_Width_Block()
+        self.export_height_state = state
+        # Save
+        Krita.instance().writeSetting( "Project Pages", "export_width_state", str( self.export_width_state ) )
+        Krita.instance().writeSetting( "Project Pages", "export_height_state", str( self.export_height_state ) )
+
+    def Export_Width_Value( self, value ):
+        # Variables
+        self.export_width_value = value
+        # Save
+        Krita.instance().writeSetting( "Project Pages", "export_width_value", str( self.export_width_value ) )
+    def Export_Height_Value( self, value ):
+        # Variables
+        self.export_height_value = value
+        # Save
+        Krita.instance().writeSetting( "Project Pages", "export_height_value", str( self.export_height_value ) )
+
+    def Export_Selection( self ):
         if ( ( self.canvas() is not None ) and ( self.canvas().view() is not None ) ):
-            boolean = QMessageBox.question( self, "Project Pages", f"Mirror Fix Layer ?\nSource = { SIGNAL_SIDE }", QMessageBox.Yes, QMessageBox.No )
-            if ( boolean == QMessageBox.Yes and SIGNAL_SIDE != None ):
-                self.MirrorFix_Run( SIGNAL_SIDE )
-    def MirrorFix_Run( self, side ):
-        if ( ( self.canvas() is not None ) and ( self.canvas().view() is not None ) ):
-            # Read
-            ki = Krita.instance()
-            ad = ki.activeDocument()
-            node = ad.activeNode()
+            # File
+            file_dialog = QFileDialog( QWidget( self ) )
+            file_dialog.setFileMode( QFileDialog.FileMode.AnyFile )
+            save_path = file_dialog.getSaveFileName( self, "Export Location", "", "*.png" )[0]
 
-            # Variables
-            name = "Mirror Fix : " + node.name()
-            width = int( ad.width() )
-            height = int( ad.height() )
-            w2 = int( width * 0.5 )
-            h2 = int( height * 0.5 )
+            # Run the Export
+            if save_path != None:
+                self.Export_RUN( save_path )
+    def Export_RUN( self, save_path ):
+        # Read
+        ki = Krita.instance()
+        ad = ki.activeDocument()
+        node = ad.activeNode()
+        adw = ad.width()
+        adh = ad.height()
 
-            # Force the Mirror Axis to Center
-            if ( side == "LEFT" or side == "RIGHT" ):
-                ki.action( 'mirrorX-moveToCenter' ).trigger()
-            if ( side == "TOP" or side == "DOWN" ):
-                ki.action( 'mirrorY-moveToCenter' ).trigger()
+        # Selection
+        ss = ad.selection()
+        if ss == None: # Create a selection
+            px = 0
+            py = 0
+            pw = ad.width()
+            ph = ad.height()
+        else: # Custom
+            px = ss.x()
+            py = ss.y()
+            pw = ss.width()
+            ph = ss.height()
 
-            # Bound
-            rect_node = node.bounds()
-            node_l = rect_node.left()
-            node_t = rect_node.top()
-
-            # Selection
-            ss = ad.selection()
-            if ss == None: # Square
-                # Correction
-                if side in ( "LEFT", "RIGHT" ):
-                    r = width % 2
-                    if r == 0:m = 0
-                    else:m = 1
-                if side in ( "TOP", "DOWN" ):
-                    r = height % 2
-                    if r == 0:m = 0
-                    else:m = 1
-
-                # Variables
-                if side == "LEFT":
-                    px = 0
-                    py = 0
-                    pw = w2 + m
-                    ph = height
-                if side == "RIGHT":
-                    px = w2
-                    py = 0
-                    pw = w2 + m
-                    ph = height
-                if side == "TOP":
-                    px = 0
-                    py = 0
-                    pw = width
-                    ph = h2 + m
-                if side == "DOWN":
-                    px = 0
-                    py = h2
-                    pw = width
-                    ph = h2 + m
-                # Selection
-                sel = Selection()
-                sel.select( int( px ), int( py ), int( pw ), int( ph ), 255 )
-                ad.setSelection( sel )
-            else: # Custom
-                sel = ss
-                px = sel.x()
-                py = sel.y()
-                pw = sel.width()
-                ph = sel.height()
-
-            # Copy
-            byte_array = node.pixelData( int( px ), int( py ), int( pw ), int( ph ) )
-            self.Wait( ad )
-            # New Node
-            new_node = ad.createNode( name, "paintLayer" )
-            ad.activeNode().parentNode().addChildNode( new_node, node )
-            self.Wait( ad )
-            ad.setActiveNode( new_node )
-            self.Wait( ad )
-
-            # Paste
-            new_node.setPixelData( byte_array, int( px ), int( py ), int( pw ), int( ph ) )
-            self.Wait( ad )
-
-            # Delete Excess
-            Krita.instance().action( 'invert_selection' ).trigger()
-            self.Wait( ad )
-            Krita.instance().action( 'clear' ).trigger()
-            self.Wait( ad )
-            Krita.instance().action( 'deselect' ).trigger()
-            self.Wait( ad )
-
-            # Mirror Node
-            if ( side == "LEFT" or side == "RIGHT" ):
-                ki.action( 'mirrorNodeX' ).trigger()
-            if ( side == "TOP" or side == "DOWN" ):
-                ki.action( 'mirrorNodeY' ).trigger()
-            self.Wait( ad )
-
-            # Merge ( this solves a alpha compositing issue )
-            merge_node = new_node.mergeDown()
-            self.Wait( ad )
-    def Wait( self, active_document ):
-        active_document.waitForDone()
-        active_document.refreshProjection()
+        # QImage
+        qimage_thumbnail = ad.thumbnail( adw, adh )
+        qimage_selection = qimage_thumbnail.copy( int( px ), int( py ), int( pw ), int( ph ) )
+        mode = Qt.SmoothTransformation
+        if ( self.export_width_state == True and self.export_height_state == False ):
+            qimage_scale = qimage_selection.scaledToWidth( int( self.export_width_value ), mode )
+        elif ( self.export_width_state == False and self.export_height_state == True ):
+            qimage_scale = qimage_selection.scaledToHeight( int( self.export_height_value ), mode )
+        else:
+            qimage_scale = qimage_selection
+        qimage_scale.save( save_path )
 
     #endregion
     #region Control
@@ -2874,8 +2862,6 @@ class ProjectPages_Docker( DockWidget ):
     QtCore.qWarning( "message" )
     QtCore.qCritical( "message" )
 
-    QTimer.singleShot( 0, lambda: self.MirrorFix_Invert( ki, ad, side, new_node ) )
-
     qmainwindow = Krita.instance().activeWindow().qwindow()
     if qmainwindow != None:
         stacked_widget = qmainwindow.centralWidget()
@@ -2887,11 +2873,14 @@ class ProjectPages_Docker( DockWidget ):
         stacked_widget.setCurrentIndex( var )
 
     """
-
     #endregion
 
 """
-Fix :
-- Mirror Fix does not work with active selections
+New:
+- Exporter Button on UI
+- Exporter has width and height limit controls
+
+Bug:
+- When resizing the canvas the guides suffer a offset before the entire document is updated by Krita. ( Krita fixed it ? )
 
 """
